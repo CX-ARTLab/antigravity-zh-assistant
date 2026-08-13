@@ -36,3 +36,4 @@
 ## 说明
 
 本项目并非 Google 官方产品，与 Google 没有隶属或授权关系。“Google”和“Antigravity”及相关品牌资源归其各自权利人所有。MIT 许可证仅适用于本仓库中的源代码，不授予任何品牌或商标使用权。
+<img width="1131" height="663" alt="image" src="https://github.com/user-attachments/assets/52ba849c-6d49-40cd-974c-a535299b0331" />
