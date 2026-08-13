@@ -1,4 +1,4 @@
-# Antigravity 中文助手
+# Antigravity 中文助手 外挂汉化 不改原程序
 
 一个面向 Windows 的 Google Antigravity 非官方中文界面助手。它通过本地调试接口在运行时翻译系统界面，不修改 Antigravity 官方程序文件，也不读取对话、代码或项目文件。
 
