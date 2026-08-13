@@ -1,0 +1,6 @@
+dist/
+*.user
+*.suo
+*.tmp
+*.download
+待适配词条.json
