@@ -30,4 +30,6 @@ jobs:
         run: |
           $asset = Get-ChildItem -LiteralPath "dist" -Filter "*.exe" | Select-Object -First 1
           if (-not $asset) { throw "Release executable was not found." }
-          gh release create "${{ github.ref_name }}" $asset.FullName --generate-notes --title "Antigravity Chinese Assistant ${{ github.ref_name }}"
+          $releaseAsset = Join-Path "dist" "AntigravityZhAssistant.exe"
+          Copy-Item -LiteralPath $asset.FullName -Destination $releaseAsset -Force
+          gh release create "${{ github.ref_name }}" $releaseAsset --generate-notes --title "Antigravity Chinese Assistant ${{ github.ref_name }}"

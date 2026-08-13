@@ -4,7 +4,7 @@
 
 ## 下载
 
-[下载最新版 Antigravity中文助手.exe](https://github.com/maclive400-design/antigravity-zh-assistant/releases/latest/download/Antigravity中文助手.exe)
+[下载最新版 AntigravityZhAssistant.exe](https://github.com/maclive400-design/antigravity-zh-assistant/releases/latest/download/AntigravityZhAssistant.exe)
 
 ## 功能
 
