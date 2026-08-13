@@ -22,8 +22,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Google Antigravity 离线界面汉化伴侣")]
 [assembly: AssemblyCompany("Local Companion")]
 [assembly: AssemblyProduct("Antigravity 中文助手")]
-[assembly: AssemblyVersion("0.6.6.0")]
-[assembly: AssemblyFileVersion("0.6.6.0")]
+[assembly: AssemblyVersion("0.6.7.0")]
+[assembly: AssemblyFileVersion("0.6.7.0")]
 
 namespace AntigravityZhAssistant
 {
@@ -41,6 +41,7 @@ namespace AntigravityZhAssistant
         [STAThread]
         private static void Main(string[] args)
         {
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             bool created;
             using (Mutex mutex = new Mutex(true, "Local\\AntigravityZhAssistant.Singleton", out created))
             using (EventWaitHandle activationEvent = new EventWaitHandle(false, EventResetMode.AutoReset,
@@ -130,7 +131,7 @@ namespace AntigravityZhAssistant
             localHttp.Timeout = TimeSpan.FromSeconds(4);
             updateHttp = new HttpClient();
             updateHttp.Timeout = TimeSpan.FromSeconds(8);
-            updateHttp.DefaultRequestHeaders.UserAgent.ParseAdd("AntigravityZhAssistant/0.6.6");
+            updateHttp.DefaultRequestHeaders.UserAgent.ParseAdd("AntigravityZhAssistant/0.6.7");
 
             Text = AppName;
             StartPosition = FormStartPosition.CenterScreen;
@@ -442,7 +443,7 @@ namespace AntigravityZhAssistant
             startButton = statusPill;
             Controls.Add(statusPill);
 
-            Label assistantVersion = FixedPixelLabel("Ver.0.66", 18F, FontStyle.Regular, Color.FromArgb(111, 143, 202));
+            Label assistantVersion = FixedPixelLabel("Ver.0.67", 18F, FontStyle.Regular, Color.FromArgb(111, 143, 202));
             assistantVersion.SetBounds(274, 286, 102, 36);
             assistantVersion.TextAlign = ContentAlignment.MiddleLeft;
             Controls.Add(assistantVersion);
