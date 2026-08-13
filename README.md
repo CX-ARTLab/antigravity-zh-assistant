@@ -15,6 +15,9 @@
 - 可选随 Windows 启动
 - 手动切换成功时播放轻提示音，不发送系统通知
 
+- <img width="1133" height="693" alt="image" src="https://github.com/user-attachments/assets/c113ff19-9340-4927-a1c6-dea453de77ef" />
+
+
 ## 汉化包更新
 
 远程汉化包位于 [`translation/translation-pack.json`](translation/translation-pack.json)。助手读取 [`translation/manifest.json`](translation/manifest.json) 判断是否有新版；离线或更新服务不可用时会继续使用本地词典。
@@ -36,4 +39,4 @@
 ## 说明
 
 本项目并非 Google 官方产品，与 Google 没有隶属或授权关系。“Google”和“Antigravity”及相关品牌资源归其各自权利人所有。MIT 许可证仅适用于本仓库中的源代码，不授予任何品牌或商标使用权。
-<img width="1131" height="663" alt="image" src="https://github.com/user-attachments/assets/52ba849c-6d49-40cd-974c-a535299b0331" />
+
