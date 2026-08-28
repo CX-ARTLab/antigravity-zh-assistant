@@ -116,6 +116,17 @@ namespace AntigravityZhAssistant
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Antigravity 中文助手"); }
         }
 
+        private static string AssistantVersionText
+        {
+            get
+            {
+                Version version = Assembly.GetExecutingAssembly().GetName().Version;
+                return version == null
+                    ? "未知"
+                    : version.Major + "." + version.Minor + "." + version.Build;
+            }
+        }
+
         private static string PackPath { get { return Path.Combine(DataDirectory, "translation-pack.json"); } }
         private static string ReportPath { get { return Path.Combine(DataDirectory, "待适配词条.json"); } }
 
@@ -179,7 +190,7 @@ namespace AntigravityZhAssistant
             header.Controls.Add(subtitle);
 
             Label versionBadge = new Label();
-            versionBadge.Text = "v0.5.0";
+            versionBadge.Text = "v" + AssistantVersionText;
             versionBadge.TextAlign = ContentAlignment.MiddleCenter;
             versionBadge.ForeColor = Color.FromArgb(11, 87, 208);
             versionBadge.BackColor = Color.FromArgb(211, 227, 253);
@@ -341,6 +352,7 @@ namespace AntigravityZhAssistant
             monitorTimer = new System.Windows.Forms.Timer();
             monitorTimer.Interval = 3000;
             monitorTimer.Tick += async delegate { await MonitorTickAsync(); };
+            monitorTimer.Start();
 
             activationThread = new Thread(ActivationLoop);
             activationThread.IsBackground = true;
@@ -443,13 +455,13 @@ namespace AntigravityZhAssistant
             startButton = statusPill;
             Controls.Add(statusPill);
 
-            Label assistantVersion = FixedPixelLabel("Ver.0.67", 18F, FontStyle.Regular, Color.FromArgb(111, 143, 202));
+            Label assistantVersion = FixedPixelLabel("Ver." + AssistantVersionText, 18F, FontStyle.Regular, Color.FromArgb(111, 143, 202));
             assistantVersion.SetBounds(274, 286, 102, 36);
             assistantVersion.TextAlign = ContentAlignment.MiddleLeft;
             Controls.Add(assistantVersion);
 
             monitorCheckBox = new CheckBox();
-            monitorCheckBox.Checked = false;
+            monitorCheckBox.Checked = true;
             adaptCheckBox = new SoftCheckBox();
             adaptCheckBox.Text = "自动更新";
             adaptCheckBox.Checked = GetSetting("AutoAdapt", true) && GetSetting("AutoPack", true);
@@ -604,7 +616,7 @@ namespace AntigravityZhAssistant
             header.Controls.Add(heading, 1, 0);
 
             Label versionBadge = new Label();
-            versionBadge.Text = "v0.5.3";
+            versionBadge.Text = "v" + AssistantVersionText;
             versionBadge.TextAlign = ContentAlignment.MiddleCenter;
             versionBadge.ForeColor = Color.FromArgb(11, 87, 208);
             versionBadge.BackColor = Color.FromArgb(211, 227, 253);
@@ -746,7 +758,7 @@ namespace AntigravityZhAssistant
             layout.Controls.Add(title, 0, 0);
 
             monitorCheckBox = new CheckBox();
-            monitorCheckBox.Checked = false;
+            monitorCheckBox.Checked = true;
             adaptCheckBox = CreateMaterialSwitch("Antigravity 更新后自动适配", GetSetting("AutoAdapt", true));
             packUpdateCheckBox = CreateMaterialSwitch("自动加载最新汉化包", GetSetting("AutoPack", true));
             startupCheckBox = CreateMaterialSwitch("随 Windows 启动", IsAutoStartEnabled());
