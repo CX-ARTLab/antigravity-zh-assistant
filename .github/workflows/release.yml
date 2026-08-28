@@ -32,12 +32,40 @@ jobs:
         with:
           name: AntigravityZhAssistant-windows
           path: dist/AntigravityZhAssistant-windows.zip
+
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-13
+            architecture: intel
+          - runner: macos-14
+            architecture: apple-silicon
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build macOS app and ZIP
+        shell: bash
+        run: bash macOS/build-macos.sh
+      - name: Upload macOS build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AntigravityZhAssistant-macOS-${{ matrix.architecture }}
+          path: dist/AntigravityZhAssistant-macOS-${{ matrix.architecture }}.zip
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish tagged release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $releaseAsset = Get-Item -LiteralPath "dist\AntigravityZhAssistant-windows.zip"
-          if (-not $releaseAsset) { throw "Release ZIP was not found." }
-          gh release create "${{ github.ref_name }}" $releaseAsset.FullName --generate-notes --title "Antigravity Chinese Assistant ${{ github.ref_name }}"
+          gh release create "${{ github.ref_name }}" dist/*.zip --generate-notes --title "Antigravity Chinese Assistant ${{ github.ref_name }}"

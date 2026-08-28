@@ -42,6 +42,20 @@ Antigravity 中文助手是一个面向 Windows 的非官方运行时汉化伴�
 
 生成的便携版程序位于 `dist/AntigravityZhAssistant.exe`。项目使用 Windows 自带的 .NET Framework C# 编译器，不需要额外安装 .NET SDK。GitHub Actions 会在发布流程中把程序、README 和许可证打包为 `AntigravityZhAssistant-windows.zip`。
 
+## macOS 版本
+
+仓库同时提供原生 SwiftUI macOS 目标，支持 macOS 12 及以上的 Intel 和 Apple Silicon 设备。macOS 版复用同一翻译词典和 Chromium 调试注入逻辑，并使用 LaunchAgent 实现“开机启动”。
+
+在 Mac 上构建：
+
+```bash
+bash macOS/build-macos.sh
+```
+
+构建脚本会生成 `dist/AntigravityZhAssistant-macOS-intel.zip` 或 `dist/AntigravityZhAssistant-macOS-apple-silicon.zip`。GitHub Actions 会分别构建两种架构；首次发布前仍建议在实际 Mac 上验证 Antigravity 的调试接口和系统权限。
+
+当前 macOS 构建未附带 Apple Developer 签名和公证；首次打开时如果 macOS 提示无法验证开发者，请在 Finder 中右键应用选择“打开”，或在“系统设置 → 隐私与安全性”中允许运行。
+
 ## 隐私与免责声明
 
 助手只处理 Antigravity 的系统界面文本；输入框、代码块、可编辑区域、文件名和用户产物标题会被排除。待适配记录仅保存在本机，除非用户主动提交。
