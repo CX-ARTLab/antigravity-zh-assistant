@@ -14,6 +14,9 @@
 - 汉化包独立更新，无需重新安装助手
 - 可选随 Windows 启动
 - 手动切换成功时播放轻提示音，不发送系统通知
+-
+- <img width="867" height="990" alt="image" src="https://github.com/user-attachments/assets/c328d91b-85d6-4125-bdd4-13c4011b9474" />
+
 
 - <img width="1133" height="693" alt="image" src="https://github.com/user-attachments/assets/c113ff19-9340-4927-a1c6-dea453de77ef" />
 
