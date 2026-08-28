@@ -17,19 +17,27 @@ jobs:
       - name: Build
         shell: powershell
         run: .\build.ps1
+      - name: Package portable ZIP
+        shell: powershell
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP "AntigravityZhAssistant"
+          Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          Copy-Item -LiteralPath "dist\AntigravityZhAssistant.exe" -Destination $stage
+          Copy-Item -LiteralPath "README.md" -Destination $stage
+          Copy-Item -LiteralPath "LICENSE" -Destination $stage
+          Compress-Archive -Path (Join-Path $stage "*") -DestinationPath "dist\AntigravityZhAssistant-windows.zip" -Force
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Antigravity中文助手
-          path: dist/Antigravity中文助手.exe
+          name: AntigravityZhAssistant-windows
+          path: dist/AntigravityZhAssistant-windows.zip
       - name: Publish tagged release
         if: startsWith(github.ref, 'refs/tags/')
         shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $asset = Get-ChildItem -LiteralPath "dist" -Filter "*.exe" | Select-Object -First 1
-          if (-not $asset) { throw "Release executable was not found." }
-          $releaseAsset = Join-Path "dist" "AntigravityZhAssistant.exe"
-          Copy-Item -LiteralPath $asset.FullName -Destination $releaseAsset -Force
-          gh release create "${{ github.ref_name }}" $releaseAsset --generate-notes --title "Antigravity Chinese Assistant ${{ github.ref_name }}"
+          $releaseAsset = Get-Item -LiteralPath "dist\AntigravityZhAssistant-windows.zip"
+          if (-not $releaseAsset) { throw "Release ZIP was not found." }
+          gh release create "${{ github.ref_name }}" $releaseAsset.FullName --generate-notes --title "Antigravity Chinese Assistant ${{ github.ref_name }}"

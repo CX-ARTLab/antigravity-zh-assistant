@@ -4,7 +4,7 @@ $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sourceRoot = Join-Path $projectRoot "src"
 $outputRoot = Join-Path $projectRoot "dist"
 $compiler = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-$outputName = "Antigravity" + [char]0x4E2D + [char]0x6587 + [char]0x52A9 + [char]0x624B + ".exe"
+$outputName = "AntigravityZhAssistant.exe"
 $outputPath = Join-Path $outputRoot $outputName
 
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -28,6 +28,8 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
     "/resource:$sourceRoot\translator.js,TranslatorJs" `
     "/resource:$sourceRoot\Assets\assistant-background.png,AssistantBackground" `
     "/resource:$sourceRoot\Assets\google-antigravity-lockup.png,BrandLockup" `
+    "/resource:$sourceRoot\Assets\antigravity-glow.png,AntigravityGlow" `
+    "/resource:$sourceRoot\Assets\antigravity-logo.png,AntigravityLogo" `
     "/out:$outputPath" `
     "$sourceRoot\Program.cs"
 

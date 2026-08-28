@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Media;
 using System.Net;
@@ -80,7 +81,7 @@ namespace AntigravityZhAssistant
 
         private const string AppName = "Antigravity 中文助手";
         private const string RunValueName = "AntigravityZhAssistant";
-        private const string PackManifestUrl = "https://raw.githubusercontent.com/maclive400-design/antigravity-zh-assistant/main/translation/manifest.json";
+        private const string PackManifestUrl = "https://raw.githubusercontent.com/CX-ARTLab/antigravity-zh-assistant/main/translation/manifest.json";
         private readonly bool startupMode;
         private Label statusLabel;
         private Label detailLabel;
@@ -94,6 +95,9 @@ namespace AntigravityZhAssistant
         private Label unknownLabel;
         private Label scanLabel;
         private StatusPillButton statusPill;
+        private CardPanel onboardingCard;
+        private Label infoLabel;
+        private Image onboardingGlow;
         private readonly NotifyIcon trayIcon;
         private readonly ToolStripMenuItem trayStartupItem;
         private readonly System.Windows.Forms.Timer monitorTimer;
@@ -114,6 +118,17 @@ namespace AntigravityZhAssistant
         private static string DataDirectory
         {
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Antigravity 中文助手"); }
+        }
+
+        private static string AssistantVersionText
+        {
+            get
+            {
+                Version version = Assembly.GetExecutingAssembly().GetName().Version;
+                return version == null
+                    ? "未知"
+                    : version.Major + "." + version.Minor + "." + version.Build;
+            }
         }
 
         private static string PackPath { get { return Path.Combine(DataDirectory, "translation-pack.json"); } }
@@ -179,7 +194,7 @@ namespace AntigravityZhAssistant
             header.Controls.Add(subtitle);
 
             Label versionBadge = new Label();
-            versionBadge.Text = "v0.5.0";
+            versionBadge.Text = "v" + AssistantVersionText;
             versionBadge.TextAlign = ContentAlignment.MiddleCenter;
             versionBadge.ForeColor = Color.FromArgb(11, 87, 208);
             versionBadge.BackColor = Color.FromArgb(211, 227, 253);
@@ -341,6 +356,7 @@ namespace AntigravityZhAssistant
             monitorTimer = new System.Windows.Forms.Timer();
             monitorTimer.Interval = 3000;
             monitorTimer.Tick += async delegate { await MonitorTickAsync(); };
+            monitorTimer.Start();
 
             activationThread = new Thread(ActivationLoop);
             activationThread.IsBackground = true;
@@ -372,89 +388,81 @@ namespace AntigravityZhAssistant
             Controls.Clear();
             foreach (Control control in previousControls) control.Dispose();
 
-            uiScale = 1F;
+            using (Graphics dpiGraphics = CreateGraphics())
+                uiScale = Math.Max(1F, dpiGraphics.DpiX / 96F);
             AutoScaleMode = AutoScaleMode.None;
             FormBorderStyle = FormBorderStyle.None;
             MaximizeBox = false;
             MinimizeBox = true;
-            ClientSize = new Size(1050, 580);
+            ClientSize = new Size(U(500), U(550));
             MinimumSize = MaximumSize = SizeFromClientSize(ClientSize);
-            BackColor = Color.FromArgb(239, 244, 255);
-            BackgroundImage = LoadEmbeddedImage("AssistantBackground");
-            BackgroundImageLayout = ImageLayout.Stretch;
+            BackColor = Color.FromArgb(234, 236, 240);
+            BackgroundImage = null;
             Padding = Padding.Empty;
-            ApplyRoundedRegion(this, 40);
+            DoubleBuffered = true;
+            ApplyRoundedRegion(this, U(8));
+            if (onboardingGlow != null) onboardingGlow.Dispose();
+            onboardingGlow = LoadEmbeddedImage("AntigravityGlow");
+            Paint += DrawOnboardingBackground;
 
             WindowGlyphButton minimizeButton = new WindowGlyphButton("\uE921");
-            minimizeButton.SetBounds(830, 18, 48, 48);
+            minimizeButton.SetBounds(U(364), 0, U(45), U(32));
+            minimizeButton.TabStop = false;
             minimizeButton.Click += delegate { WindowState = FormWindowState.Minimized; };
             Controls.Add(minimizeButton);
 
             WindowGlyphButton maximizeButton = new WindowGlyphButton("\uE922");
-            maximizeButton.SetBounds(898, 18, 48, 48);
+            maximizeButton.SetBounds(U(409), 0, U(45), U(32));
             maximizeButton.TabStop = false;
             Controls.Add(maximizeButton);
 
             WindowGlyphButton closeButton = new WindowGlyphButton("\uE8BB");
-            closeButton.SetBounds(966, 18, 48, 48);
+            closeButton.SetBounds(U(454), 0, U(46), U(32));
             closeButton.IsCloseButton = true;
+            closeButton.TabStop = false;
             closeButton.Click += delegate { Close(); };
             Controls.Add(closeButton);
 
             PictureBox brand = new PictureBox();
-            brand.Image = LoadEmbeddedImage("BrandLockup");
+            brand.Image = LoadEmbeddedImage("AntigravityLogo");
             brand.SizeMode = PictureBoxSizeMode.Zoom;
             brand.BackColor = Color.Transparent;
-            brand.SetBounds(104, 210, 394, 60);
+            brand.SetBounds(U(218), U(109), U(64), U(64));
             Controls.Add(brand);
 
-            Label assistantTitle = FixedPixelLabel("汉化助手", 28F, FontStyle.Regular, Color.FromArgb(31, 34, 41));
-            assistantTitle.SetBounds(352, 270, 164, 52);
+            Label assistantTitle = FixedPixelLabel("Welcome to Antigravity", 24F, FontStyle.Regular, Color.FromArgb(76, 79, 105));
+            assistantTitle.Font = new Font("Segoe UI Variable Display Semib", 24F * uiScale,
+                FontStyle.Regular, GraphicsUnit.Pixel);
+            assistantTitle.SetBounds(U(78), U(205), U(344), U(32));
             assistantTitle.TextAlign = ContentAlignment.MiddleCenter;
             Controls.Add(assistantTitle);
 
+            DrawOnboardingCard();
+
             statusLabel = new Label();
+            statusLabel.Visible = false;
             detailLabel = new Label();
-            Label antigravityCaption = FixedPixelLabel("Antigravity", 20F, FontStyle.Regular, Color.FromArgb(104, 143, 200));
-            antigravityCaption.SetBounds(100, 486, 120, 44);
-            antigravityCaption.TextAlign = ContentAlignment.MiddleLeft;
-            Controls.Add(antigravityCaption);
-
-            versionLabel = FixedPixelLabel("未检测", 20F, FontStyle.Regular, Color.FromArgb(104, 143, 200));
-            versionLabel.SetBounds(214, 486, 82, 44);
-            versionLabel.TextAlign = ContentAlignment.MiddleLeft;
-            Controls.Add(versionLabel);
-
-            Label unknownCaption = FixedPixelLabel("待适配：", 20F, FontStyle.Regular, Color.FromArgb(104, 143, 200));
-            unknownCaption.SetBounds(302, 486, 108, 44);
-            unknownCaption.TextAlign = ContentAlignment.MiddleLeft;
-            Controls.Add(unknownCaption);
-
-            unknownLabel = FixedPixelLabel("0", 20F, FontStyle.Regular, Color.FromArgb(104, 143, 200));
-            unknownLabel.SetBounds(412, 486, 54, 44);
-            unknownLabel.TextAlign = ContentAlignment.MiddleLeft;
-            Controls.Add(unknownLabel);
+            detailLabel.Visible = false;
+            versionLabel = new Label();
+            versionLabel.Visible = false;
+            unknownLabel = new Label();
+            unknownLabel.Visible = false;
             scanLabel = new Label();
-
-            statusPill = new StatusPillButton();
-            statusPill.Text = "尚未汉化";
-            statusPill.SetBounds(601, 210, 355, 120);
-            statusPill.Click += async delegate { await ToggleLocalizationAsync(); };
-            startButton = statusPill;
-            Controls.Add(statusPill);
-
-            Label assistantVersion = FixedPixelLabel("Ver.0.67", 18F, FontStyle.Regular, Color.FromArgb(111, 143, 202));
-            assistantVersion.SetBounds(274, 286, 102, 36);
-            assistantVersion.TextAlign = ContentAlignment.MiddleLeft;
-            Controls.Add(assistantVersion);
+            scanLabel.Visible = false;
+            Controls.Add(statusLabel);
+            Controls.Add(detailLabel);
+            Controls.Add(versionLabel);
+            Controls.Add(unknownLabel);
+            Controls.Add(scanLabel);
 
             monitorCheckBox = new CheckBox();
-            monitorCheckBox.Checked = false;
+            monitorCheckBox.Checked = true;
             adaptCheckBox = new SoftCheckBox();
             adaptCheckBox.Text = "自动更新";
+            adaptCheckBox.Font = new Font("Microsoft YaHei UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
             adaptCheckBox.Checked = GetSetting("AutoAdapt", true) && GetSetting("AutoPack", true);
-            adaptCheckBox.SetBounds(628, 486, 160, 44);
-            Controls.Add(adaptCheckBox);
+            adaptCheckBox.SetBounds(U(86), U(123), U(80), U(24));
+            onboardingCard.Controls.Add(adaptCheckBox);
 
             packUpdateCheckBox = new CheckBox();
             packUpdateCheckBox.Checked = adaptCheckBox.Checked;
@@ -462,16 +470,92 @@ namespace AntigravityZhAssistant
 
             startupCheckBox = new SoftCheckBox();
             startupCheckBox.Text = "开机启动";
+            startupCheckBox.Font = new Font("Microsoft YaHei UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
             startupCheckBox.Checked = IsAutoStartEnabled();
-            startupCheckBox.SetBounds(808, 486, 170, 44);
-            Controls.Add(startupCheckBox);
+            startupCheckBox.SetBounds(U(178), U(123), U(80), U(24));
+            onboardingCard.Controls.Add(startupCheckBox);
 
             hideButton = new Button();
+            hideButton.Visible = false;
             adaptCheckBox.CheckedChanged += AutoUpdateCheckChanged;
             adaptCheckBox.CheckedChanged += AutomationSettingChanged;
             packUpdateCheckBox.CheckedChanged += AutomationSettingChanged;
             startupCheckBox.CheckedChanged += StartupCheckBoxChanged;
+
+            lastAntigravityVersion = GetAntigravityVersion();
+            UpdateMetrics();
             ResumeLayout(true);
+        }
+
+        private void DrawOnboardingCard()
+        {
+            onboardingCard = new CardPanel();
+            CardPanel card = onboardingCard;
+            card.SetBounds(U(78), U(269), U(344), U(168));
+            card.BackColor = Color.FromArgb(236, 239, 242);
+            card.BorderColor = Color.FromArgb(215, 217, 222);
+            card.CornerRadius = U(12);
+            Controls.Add(card);
+
+            Label assistantVersion = FixedPixelLabel("汉化助手 v" + AssistantVersionText, 14F,
+                FontStyle.Regular, Color.FromArgb(76, 79, 105));
+            assistantVersion.Font = new Font("Microsoft YaHei UI", 14F * uiScale,
+                FontStyle.Bold, GraphicsUnit.Pixel);
+            assistantVersion.SetBounds(U(24), U(21), U(296), U(20));
+            assistantVersion.TextAlign = ContentAlignment.MiddleCenter;
+            card.Controls.Add(assistantVersion);
+
+            statusPill = new StatusPillButton();
+            statusPill.Text = "尚未汉化";
+            statusPill.Font = new Font("Microsoft YaHei UI", 15F * uiScale,
+                FontStyle.Bold, GraphicsUnit.Pixel);
+            statusPill.SetBounds(U(28), U(62), U(272), U(40));
+            statusPill.Click += async delegate { await ToggleLocalizationAsync(); };
+            startButton = statusPill;
+            card.Controls.Add(statusPill);
+
+            infoLabel = FixedPixelLabel(BuildInfoText(), 12F, FontStyle.Regular, Color.FromArgb(103, 107, 129));
+            infoLabel.Font = new Font("Segoe UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
+            infoLabel.SetBounds(U(114), U(454), U(272), U(24));
+            infoLabel.TextAlign = ContentAlignment.MiddleCenter;
+            Controls.Add(infoLabel);
+        }
+
+        private string BuildInfoText()
+        {
+            return "Antigravity " + lastAntigravityVersion + "  ·  待适配 " + unknownStrings.Count;
+        }
+
+        private void DrawOnboardingBackground(object sender, PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            GraphicsState state = e.Graphics.Save();
+            e.Graphics.ScaleTransform(uiScale, uiScale);
+            if (onboardingGlow != null)
+            {
+                using (ImageAttributes attributes = new ImageAttributes())
+                {
+                    ColorMatrix matrix = new ColorMatrix();
+                    matrix.Matrix33 = 0.20F;
+                    attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+                    e.Graphics.DrawImage(onboardingGlow, new Rectangle(90, -26, 319, 333),
+                        0, 0, onboardingGlow.Width, onboardingGlow.Height, GraphicsUnit.Pixel, attributes);
+                }
+            }
+
+            using (SolidBrush titleButtons = new SolidBrush(Color.FromArgb(228, 230, 234)))
+                e.Graphics.FillRectangle(titleButtons, 364, 0, 136, 32);
+
+            using (GraphicsPath shadow = CreateRoundedPath(new Rectangle(78, 271, 344, 168), 12))
+            using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(22, 0, 0, 0)))
+                e.Graphics.FillPath(shadowBrush, shadow);
+
+            e.Graphics.Restore(state);
+
+            using (GraphicsPath border = CreateRoundedPath(
+                new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1), U(8)))
+            using (Pen pen = new Pen(Color.FromArgb(65, 68, 78)))
+                e.Graphics.DrawPath(pen, border);
         }
 
         private void AutoUpdateCheckChanged(object sender, EventArgs e)
@@ -481,7 +565,7 @@ namespace AntigravityZhAssistant
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && e.Y < 110)
+            if (e.Button == MouseButtons.Left && e.Y < U(32))
             {
                 ReleaseCapture();
                 SendMessage(Handle, 0x00A1, new IntPtr(2), IntPtr.Zero);
@@ -604,7 +688,7 @@ namespace AntigravityZhAssistant
             header.Controls.Add(heading, 1, 0);
 
             Label versionBadge = new Label();
-            versionBadge.Text = "v0.5.3";
+            versionBadge.Text = "v" + AssistantVersionText;
             versionBadge.TextAlign = ContentAlignment.MiddleCenter;
             versionBadge.ForeColor = Color.FromArgb(11, 87, 208);
             versionBadge.BackColor = Color.FromArgb(211, 227, 253);
@@ -746,7 +830,7 @@ namespace AntigravityZhAssistant
             layout.Controls.Add(title, 0, 0);
 
             monitorCheckBox = new CheckBox();
-            monitorCheckBox.Checked = false;
+            monitorCheckBox.Checked = true;
             adaptCheckBox = CreateMaterialSwitch("Antigravity 更新后自动适配", GetSetting("AutoAdapt", true));
             packUpdateCheckBox = CreateMaterialSwitch("自动加载最新汉化包", GetSetting("AutoPack", true));
             startupCheckBox = CreateMaterialSwitch("随 Windows 启动", IsAutoStartEnabled());
@@ -1319,6 +1403,7 @@ namespace AntigravityZhAssistant
             versionLabel.Text = lastAntigravityVersion;
             unknownLabel.Text = unknownStrings.Count.ToString();
             scanLabel.Text = DateTime.Now.ToString("HH:mm:ss");
+            if (infoLabel != null) infoLabel.Text = BuildInfoText();
         }
 
         private static string GetAntigravityVersion()
@@ -1625,6 +1710,7 @@ namespace AntigravityZhAssistant
                 trayIcon.Dispose();
                 localHttp.Dispose();
                 updateHttp.Dispose();
+                if (onboardingGlow != null) onboardingGlow.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -1651,7 +1737,7 @@ namespace AntigravityZhAssistant
             Cursor = Cursors.Hand;
             FlatStyle = FlatStyle.Flat;
             FlatAppearance.BorderSize = 0;
-            Font = new Font("Microsoft YaHei UI", 42F, FontStyle.Regular, GraphicsUnit.Pixel);
+            Font = new Font("Segoe UI Semibold", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
             BackColor = Color.Transparent;
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
@@ -1676,32 +1762,45 @@ namespace AntigravityZhAssistant
         {
             base.OnPaintBackground(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            Rectangle bounds = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (GraphicsPath path = RoundedRectangle(bounds, 38))
+            int radius = (int)Math.Round(8 * e.Graphics.DpiX / 96F);
+            Rectangle shadowBounds = new Rectangle(1, 2, Width - 2, Height - 3);
+            using (GraphicsPath shadow = RoundedRectangle(shadowBounds, radius))
+            using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(24, 0, 0, 0)))
+                e.Graphics.FillPath(shadowBrush, shadow);
+
+            Rectangle bounds = new Rectangle(0, 0, Width - 1, Height - 3);
+            using (GraphicsPath path = RoundedRectangle(bounds, radius))
             {
                 Color fillColor = IsLocalized
-                    ? (hovering && Enabled ? Color.FromArgb(15, 15, 18) : Color.Black)
-                    : (hovering && Enabled ? Color.FromArgb(220, 255, 255, 255) : Color.FromArgb(170, 255, 255, 255));
+                    ? (hovering && Enabled ? Color.FromArgb(124, 48, 221) : Color.FromArgb(136, 57, 239))
+                    : (hovering && Enabled ? Color.FromArgb(222, 224, 230) : Color.FromArgb(230, 232, 236));
                 using (SolidBrush fill = new SolidBrush(fillColor)) e.Graphics.FillPath(fill, path);
             }
 
-            Rectangle textBounds = Rectangle.Inflate(bounds, -22, -12);
-            using (StringFormat format = new StringFormat())
+            Color textColor = IsLocalized ? Color.FromArgb(234, 236, 240) : Color.FromArgb(76, 79, 105);
+            if (IsLocalized)
             {
-                format.Alignment = StringAlignment.Center;
-                format.LineAlignment = StringAlignment.Center;
-                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                if (IsLocalized)
+                float scale = e.Graphics.DpiX / 96F;
+                using (Font iconFont = new Font("Segoe Fluent Icons", 16F * scale, FontStyle.Regular, GraphicsUnit.Pixel))
                 {
-                    using (LinearGradientBrush textBrush = new LinearGradientBrush(textBounds,
-                        Color.FromArgb(70, 232, 196), Color.FromArgb(224, 139, 220), 0F))
-                        e.Graphics.DrawString(Text, Font, textBrush, textBounds, format);
+                    Size textSize = TextRenderer.MeasureText(Text, Font, Size.Empty,
+                        TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                    int iconSize = (int)Math.Round(16 * scale);
+                    int gap = (int)Math.Round(8 * scale);
+                    int totalWidth = iconSize + gap + textSize.Width;
+                    int left = (Width - totalWidth) / 2;
+                    Rectangle iconBounds = new Rectangle(left, 0, iconSize, bounds.Height);
+                    Rectangle textBounds = new Rectangle(left + iconSize + gap, 0, textSize.Width, bounds.Height);
+                    TextRenderer.DrawText(e.Graphics, "\uE73E", iconFont, iconBounds, textColor,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                    TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, textColor,
+                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
                 }
-                else
-                {
-                    using (SolidBrush textBrush = new SolidBrush(Color.FromArgb(75, 88, 115)))
-                        e.Graphics.DrawString(Text, Font, textBrush, textBounds, format);
-                }
+            }
+            else
+            {
+                TextRenderer.DrawText(e.Graphics, Text, Font, bounds, textColor,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
             }
         }
 
@@ -1709,12 +1808,108 @@ namespace AntigravityZhAssistant
         {
             base.OnResize(e);
             if (Width <= 0 || Height <= 0) return;
-            using (GraphicsPath path = RoundedRectangle(new Rectangle(0, 0, Width, Height), 38))
+            float scale;
+            using (Graphics graphics = CreateGraphics()) scale = graphics.DpiX / 96F;
+            using (GraphicsPath path = RoundedRectangle(new Rectangle(0, 0, Width, Height), (int)Math.Round(8 * scale)))
             {
                 Region oldRegion = Region;
                 Region = new Region(path);
                 if (oldRegion != null) oldRegion.Dispose();
             }
+        }
+
+        private static GraphicsPath RoundedRectangle(Rectangle bounds, int radius)
+        {
+            int diameter = radius * 2;
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(bounds.Left, bounds.Top, diameter, diameter, 180, 90);
+            path.AddArc(bounds.Right - diameter, bounds.Top, diameter, diameter, 270, 90);
+            path.AddArc(bounds.Right - diameter, bounds.Bottom - diameter, diameter, diameter, 0, 90);
+            path.AddArc(bounds.Left, bounds.Bottom - diameter, diameter, diameter, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+    }
+
+    internal sealed class OnboardingInfoButton : Button
+    {
+        public OnboardingInfoButton()
+        {
+            TabStop = false;
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            Font = new Font("Segoe UI Semibold", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
+            BackColor = Color.Transparent;
+            ForeColor = Color.FromArgb(76, 79, 105);
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
+                ControlStyles.SupportsTransparentBackColor, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaintBackground(e);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            int radius = (int)Math.Round(8 * e.Graphics.DpiX / 96F);
+            Rectangle shadowBounds = new Rectangle(1, 2, Width - 2, Height - 3);
+            using (GraphicsPath shadow = RoundedRectangle(shadowBounds, radius))
+            using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(22, 0, 0, 0)))
+                e.Graphics.FillPath(shadowBrush, shadow);
+
+            Rectangle bounds = new Rectangle(0, 0, Width - 1, Height - 3);
+            using (GraphicsPath path = RoundedRectangle(bounds, radius))
+            using (SolidBrush fill = new SolidBrush(Color.FromArgb(230, 232, 236)))
+            using (Pen border = new Pen(Color.FromArgb(213, 215, 220)))
+            {
+                e.Graphics.FillPath(fill, path);
+                e.Graphics.DrawPath(border, path);
+            }
+            TextRenderer.DrawText(e.Graphics, Text, Font, bounds, ForeColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        }
+
+        private static GraphicsPath RoundedRectangle(Rectangle bounds, int radius)
+        {
+            int diameter = radius * 2;
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(bounds.Left, bounds.Top, diameter, diameter, 180, 90);
+            path.AddArc(bounds.Right - diameter, bounds.Top, diameter, diameter, 270, 90);
+            path.AddArc(bounds.Right - diameter, bounds.Bottom - diameter, diameter, diameter, 0, 90);
+            path.AddArc(bounds.Left, bounds.Bottom - diameter, diameter, diameter, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+    }
+
+    internal sealed class OnboardingFooterButton : Control
+    {
+        public bool Filled { get; set; }
+
+        public OnboardingFooterButton()
+        {
+            TabStop = false;
+            Font = new Font("Segoe UI Semibold", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
+            ForeColor = Color.FromArgb(194, 197, 207);
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
+                ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaintBackground(e);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            int radius = (int)Math.Round(8 * e.Graphics.DpiX / 96F);
+            Rectangle bounds = new Rectangle(0, 0, Width - 1, Height - 1);
+            if (Filled)
+            {
+                using (GraphicsPath path = RoundedRectangle(bounds, radius))
+                using (SolidBrush fill = new SolidBrush(Color.FromArgb(226, 228, 233)))
+                    e.Graphics.FillPath(fill, path);
+            }
+            TextRenderer.DrawText(e.Graphics, Text, Font, bounds, ForeColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
 
         private static GraphicsPath RoundedRectangle(Rectangle bounds, int radius)
@@ -1736,8 +1931,8 @@ namespace AntigravityZhAssistant
         {
             AutoSize = false;
             Cursor = Cursors.Hand;
-            Font = new Font("Microsoft YaHei UI", 22F, FontStyle.Regular, GraphicsUnit.Pixel);
-            ForeColor = Color.FromArgb(31, 34, 41);
+            Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Regular, GraphicsUnit.Pixel);
+            ForeColor = Color.FromArgb(150, 154, 172);
             BackColor = Color.Transparent;
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
@@ -1748,28 +1943,34 @@ namespace AntigravityZhAssistant
         {
             base.OnPaintBackground(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            int boxSize = 28;
+            float scale = e.Graphics.DpiX / 96F;
+            int boxSize = (int)Math.Round(14 * scale);
             Rectangle box = new Rectangle(0, (Height - boxSize) / 2, boxSize, boxSize);
-            using (GraphicsPath path = RoundedRectangle(box, 7))
-            using (SolidBrush fill = new SolidBrush(Checked ? Color.FromArgb(139, 181, 250) : Color.FromArgb(221, 230, 246)))
+            using (GraphicsPath path = RoundedRectangle(box, (int)Math.Round(4 * scale)))
+            using (SolidBrush fill = new SolidBrush(Checked ? Color.FromArgb(136, 57, 239) : Color.FromArgb(230, 232, 236)))
+            using (Pen border = new Pen(Checked ? Color.FromArgb(136, 57, 239) : Color.FromArgb(203, 205, 212)))
+            {
                 e.Graphics.FillPath(fill, path);
+                e.Graphics.DrawPath(border, path);
+            }
 
             if (Checked)
             {
-                using (Pen check = new Pen(Color.White, 2.4F))
+                using (Pen check = new Pen(Color.White, 1.5F * scale))
                 {
                     check.StartCap = LineCap.Round;
                     check.EndCap = LineCap.Round;
                     e.Graphics.DrawLines(check, new[]
                     {
-                        new Point(box.Left + 7, box.Top + 14),
-                        new Point(box.Left + 12, box.Top + 19),
-                        new Point(box.Left + 21, box.Top + 9)
+                        new Point(box.Left + (int)Math.Round(3 * scale), box.Top + (int)Math.Round(7 * scale)),
+                        new Point(box.Left + (int)Math.Round(6 * scale), box.Top + (int)Math.Round(10 * scale)),
+                        new Point(box.Left + (int)Math.Round(11 * scale), box.Top + (int)Math.Round(4 * scale))
                     });
                 }
             }
 
-            Rectangle textBounds = new Rectangle(box.Right + 12, 0, Width - box.Right - 12, Height);
+            int textGap = (int)Math.Round(6 * scale);
+            Rectangle textBounds = new Rectangle(box.Right + textGap, 0, Width - box.Right - textGap, Height);
             TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, ForeColor,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         }
@@ -1796,7 +1997,7 @@ namespace AntigravityZhAssistant
         {
             Text = glyph;
             Font = new Font("Segoe Fluent Icons", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
-            ForeColor = Color.FromArgb(54, 58, 68);
+            ForeColor = Color.FromArgb(76, 79, 105);
             BackColor = Color.Transparent;
             FlatStyle = FlatStyle.Flat;
             FlatAppearance.BorderSize = 0;
