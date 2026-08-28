@@ -81,7 +81,7 @@ namespace AntigravityZhAssistant
 
         private const string AppName = "Antigravity 中文助手";
         private const string RunValueName = "AntigravityZhAssistant";
-        private const string PackManifestUrl = "https://raw.githubusercontent.com/maclive400-design/antigravity-zh-assistant/main/translation/manifest.json";
+        private const string PackManifestUrl = "https://raw.githubusercontent.com/CX-ARTLab/antigravity-zh-assistant/main/translation/manifest.json";
         private readonly bool startupMode;
         private Label statusLabel;
         private Label detailLabel;
