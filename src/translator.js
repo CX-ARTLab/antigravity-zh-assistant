@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = "0.6.5";
+  const VERSION = "0.6.6";
   const DISABLED_KEY = "__antigravityZhAssistantDisabled";
   const AUTO_ADAPT = __AUTO_ADAPT__;
   const extraDictionary = Object.freeze(__EXTRA_TRANSLATIONS__);
@@ -24,6 +24,9 @@
     "Scheduled Tasks": "定时任务",
     "Projects": "项目",
     "Project": "项目",
+    "CLI Project": "CLI 项目",
+    "Infinite-Canvas": "无限画布",
+    "Local": "本地",
     "Conversations": "对话",
     "Display Options": "显示选项",
     "Create New Project": "新建项目",
