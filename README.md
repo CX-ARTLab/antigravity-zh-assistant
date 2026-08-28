@@ -4,7 +4,7 @@ Antigravity 中文助手是一个面向 Windows 的非官方运行时汉化伴�
 
 ## 普通用户使用
 
-1. 从 [Releases](https://github.com/CX-ARTLab/antigravity-zh-assistant/releases/latest) 下载 `AntigravityZhAssistant-windows.zip`。
+1. 从 [Releases](https://github.com/CX-ARTLab/antigravity-zh-assistant/releases/latest) 下载发布页中的 `AntigravityZhAssistant-windows.zip`（PR 合并并发布新版本后提供）。
 2. 将 ZIP 解压到任意文件夹。无需安装 SDK，也不需要把 EXE 放进 Antigravity 安装目录。
 3. 先启动 Antigravity，再运行解压后的 `AntigravityZhAssistant.exe`。
 4. 点击紫色状态按钮应用或恢复汉化；“自动更新”会定期检查并重新应用翻译，“开机启动”可让助手随 Windows 启动。
