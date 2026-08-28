@@ -95,7 +95,7 @@ namespace AntigravityZhAssistant
         private Label unknownLabel;
         private Label scanLabel;
         private StatusPillButton statusPill;
-        private Button infoButton;
+        private Label infoLabel;
         private Image onboardingGlow;
         private readonly NotifyIcon trayIcon;
         private readonly ToolStripMenuItem trayStartupItem;
@@ -389,12 +389,11 @@ namespace AntigravityZhAssistant
 
             using (Graphics dpiGraphics = CreateGraphics())
                 uiScale = Math.Max(1F, dpiGraphics.DpiX / 96F);
-            AutoScaleMode = AutoScaleMode.Dpi;
-            AutoScaleDimensions = new SizeF(96F, 96F);
+            AutoScaleMode = AutoScaleMode.None;
             FormBorderStyle = FormBorderStyle.None;
             MaximizeBox = false;
             MinimizeBox = true;
-            ClientSize = new Size(U(500), U(874));
+            ClientSize = new Size(U(500), U(872));
             MinimumSize = MaximumSize = SizeFromClientSize(ClientSize);
             BackColor = Color.FromArgb(234, 236, 240);
             BackgroundImage = null;
@@ -406,18 +405,18 @@ namespace AntigravityZhAssistant
             Paint += DrawOnboardingBackground;
 
             WindowGlyphButton minimizeButton = new WindowGlyphButton("\uE921");
-            minimizeButton.SetBounds(364, 0, 45, 32);
+            minimizeButton.SetBounds(U(364), 0, U(45), U(32));
             minimizeButton.TabStop = false;
             minimizeButton.Click += delegate { WindowState = FormWindowState.Minimized; };
             Controls.Add(minimizeButton);
 
             WindowGlyphButton maximizeButton = new WindowGlyphButton("\uE922");
-            maximizeButton.SetBounds(409, 0, 45, 32);
+            maximizeButton.SetBounds(U(409), 0, U(45), U(32));
             maximizeButton.TabStop = false;
             Controls.Add(maximizeButton);
 
             WindowGlyphButton closeButton = new WindowGlyphButton("\uE8BB");
-            closeButton.SetBounds(454, 0, 46, 32);
+            closeButton.SetBounds(U(454), 0, U(46), U(32));
             closeButton.IsCloseButton = true;
             closeButton.TabStop = false;
             closeButton.Click += delegate { Close(); };
@@ -427,12 +426,13 @@ namespace AntigravityZhAssistant
             brand.Image = LoadEmbeddedImage("AntigravityLogo");
             brand.SizeMode = PictureBoxSizeMode.Zoom;
             brand.BackColor = Color.Transparent;
-            brand.SetBounds(218, 109, 64, 64);
+            brand.SetBounds(U(218), U(109), U(64), U(64));
             Controls.Add(brand);
 
             Label assistantTitle = FixedPixelLabel("Welcome to Antigravity", 24F, FontStyle.Regular, Color.FromArgb(76, 79, 105));
-            assistantTitle.Font = new Font("Segoe UI", 24F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            assistantTitle.SetBounds(78, 205, 344, 32);
+            assistantTitle.Font = new Font("Segoe UI Variable Display Semib", 24F * uiScale,
+                FontStyle.Regular, GraphicsUnit.Pixel);
+            assistantTitle.SetBounds(U(78), U(205), U(344), U(32));
             assistantTitle.TextAlign = ContentAlignment.MiddleCenter;
             Controls.Add(assistantTitle);
 
@@ -460,7 +460,7 @@ namespace AntigravityZhAssistant
             adaptCheckBox.Text = "自动更新";
             adaptCheckBox.Font = new Font("Microsoft YaHei UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
             adaptCheckBox.Checked = GetSetting("AutoAdapt", true) && GetSetting("AutoPack", true);
-            adaptCheckBox.SetBounds(164, 454, 80, 24);
+            adaptCheckBox.SetBounds(U(164), U(454), U(80), U(24));
             Controls.Add(adaptCheckBox);
 
             packUpdateCheckBox = new CheckBox();
@@ -471,7 +471,7 @@ namespace AntigravityZhAssistant
             startupCheckBox.Text = "开机启动";
             startupCheckBox.Font = new Font("Microsoft YaHei UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
             startupCheckBox.Checked = IsAutoStartEnabled();
-            startupCheckBox.SetBounds(256, 454, 80, 24);
+            startupCheckBox.SetBounds(U(256), U(454), U(80), U(24));
             Controls.Add(startupCheckBox);
 
             hideButton = new Button();
@@ -489,7 +489,7 @@ namespace AntigravityZhAssistant
         private void DrawOnboardingCard()
         {
             CardPanel card = new CardPanel();
-            card.SetBounds(78, 269, 344, 182);
+            card.SetBounds(U(78), U(269), U(344), U(182));
             card.BackColor = Color.FromArgb(236, 239, 242);
             card.BorderColor = Color.FromArgb(215, 217, 222);
             card.CornerRadius = U(12);
@@ -497,38 +497,26 @@ namespace AntigravityZhAssistant
 
             Label assistantVersion = FixedPixelLabel("汉化助手 v" + AssistantVersionText, 14F,
                 FontStyle.Regular, Color.FromArgb(76, 79, 105));
-            assistantVersion.Font = new Font("Segoe UI Semibold", 14F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            assistantVersion.SetBounds(24, 24, 296, 20);
+            assistantVersion.Font = new Font("Microsoft YaHei UI", 14F * uiScale,
+                FontStyle.Bold, GraphicsUnit.Pixel);
+            assistantVersion.SetBounds(U(24), U(24), U(296), U(20));
             assistantVersion.TextAlign = ContentAlignment.MiddleCenter;
             card.Controls.Add(assistantVersion);
 
             statusPill = new StatusPillButton();
             statusPill.Text = "尚未汉化";
-            statusPill.Font = new Font("Segoe UI Semibold", 14F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            statusPill.SetBounds(28, 61, 272, 40);
+            statusPill.Font = new Font("Microsoft YaHei UI", 15F * uiScale,
+                FontStyle.Bold, GraphicsUnit.Pixel);
+            statusPill.SetBounds(U(28), U(61), U(272), U(40));
             statusPill.Click += async delegate { await ToggleLocalizationAsync(); };
             startButton = statusPill;
             card.Controls.Add(statusPill);
 
-            infoButton = new OnboardingInfoButton();
-            infoButton.Text = BuildInfoText();
-            infoButton.Font = new Font("Segoe UI Semibold", 14F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            infoButton.SetBounds(28, 117, 272, 40);
-            card.Controls.Add(infoButton);
-
-            OnboardingFooterButton pagePrevious = new OnboardingFooterButton();
-            pagePrevious.Text = "上一步";
-            pagePrevious.Font = new Font("Segoe UI Semibold", 14F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            pagePrevious.Filled = false;
-            pagePrevious.SetBounds(122, 697, 256, 32);
-            Controls.Add(pagePrevious);
-
-            OnboardingFooterButton pageNext = new OnboardingFooterButton();
-            pageNext.Text = "下一步";
-            pageNext.Font = new Font("Segoe UI Semibold", 14F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            pageNext.Filled = true;
-            pageNext.SetBounds(122, 733, 256, 32);
-            Controls.Add(pageNext);
+            infoLabel = FixedPixelLabel(BuildInfoText(), 12F, FontStyle.Regular, Color.FromArgb(103, 107, 129));
+            infoLabel.Font = new Font("Segoe UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
+            infoLabel.SetBounds(U(28), U(121), U(272), U(28));
+            infoLabel.TextAlign = ContentAlignment.MiddleCenter;
+            card.Controls.Add(infoLabel);
         }
 
         private string BuildInfoText()
@@ -562,7 +550,8 @@ namespace AntigravityZhAssistant
 
             e.Graphics.Restore(state);
 
-            using (GraphicsPath border = CreateRoundedPath(new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1), 8))
+            using (GraphicsPath border = CreateRoundedPath(
+                new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1), U(8)))
             using (Pen pen = new Pen(Color.FromArgb(65, 68, 78)))
                 e.Graphics.DrawPath(pen, border);
         }
@@ -574,7 +563,7 @@ namespace AntigravityZhAssistant
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && e.Y < 32)
+            if (e.Button == MouseButtons.Left && e.Y < U(32))
             {
                 ReleaseCapture();
                 SendMessage(Handle, 0x00A1, new IntPtr(2), IntPtr.Zero);
@@ -1412,7 +1401,7 @@ namespace AntigravityZhAssistant
             versionLabel.Text = lastAntigravityVersion;
             unknownLabel.Text = unknownStrings.Count.ToString();
             scanLabel.Text = DateTime.Now.ToString("HH:mm:ss");
-            if (infoButton != null) infoButton.Text = BuildInfoText();
+            if (infoLabel != null) infoLabel.Text = BuildInfoText();
         }
 
         private static string GetAntigravityVersion()
