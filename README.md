@@ -18,9 +18,6 @@
 - <img width="867" height="990" alt="image" src="https://github.com/user-attachments/assets/c328d91b-85d6-4125-bdd4-13c4011b9474" />
 
 
-- <img width="1133" height="693" alt="image" src="https://github.com/user-attachments/assets/c113ff19-9340-4927-a1c6-dea453de77ef" />
-
-
 ## 汉化包更新
 
 远程汉化包位于 [`translation/translation-pack.json`](translation/translation-pack.json)。助手读取 [`translation/manifest.json`](translation/manifest.json) 判断是否有新版；离线或更新服务不可用时会继续使用本地词典。
