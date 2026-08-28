@@ -28,6 +28,8 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
     "/resource:$sourceRoot\translator.js,TranslatorJs" `
     "/resource:$sourceRoot\Assets\assistant-background.png,AssistantBackground" `
     "/resource:$sourceRoot\Assets\google-antigravity-lockup.png,BrandLockup" `
+    "/resource:$sourceRoot\Assets\antigravity-glow.png,AntigravityGlow" `
+    "/resource:$sourceRoot\Assets\antigravity-logo.png,AntigravityLogo" `
     "/out:$outputPath" `
     "$sourceRoot\Program.cs"
 
