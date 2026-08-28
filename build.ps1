@@ -4,7 +4,7 @@ $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sourceRoot = Join-Path $projectRoot "src"
 $outputRoot = Join-Path $projectRoot "dist"
 $compiler = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-$outputName = "Antigravity" + [char]0x4E2D + [char]0x6587 + [char]0x52A9 + [char]0x624B + ".exe"
+$outputName = "AntigravityZhAssistant.exe"
 $outputPath = Join-Path $outputRoot $outputName
 
 if (-not (Test-Path -LiteralPath $compiler)) {
