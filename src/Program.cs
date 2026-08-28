@@ -393,7 +393,7 @@ namespace AntigravityZhAssistant
             FormBorderStyle = FormBorderStyle.None;
             MaximizeBox = false;
             MinimizeBox = true;
-            ClientSize = new Size(U(500), U(872));
+            ClientSize = new Size(U(500), U(550));
             MinimumSize = MaximumSize = SizeFromClientSize(ClientSize);
             BackColor = Color.FromArgb(234, 236, 240);
             BackgroundImage = null;
@@ -507,14 +507,14 @@ namespace AntigravityZhAssistant
             statusPill.Text = "尚未汉化";
             statusPill.Font = new Font("Microsoft YaHei UI", 15F * uiScale,
                 FontStyle.Bold, GraphicsUnit.Pixel);
-            statusPill.SetBounds(U(28), U(61), U(272), U(40));
+            statusPill.SetBounds(U(28), U(68), U(272), U(40));
             statusPill.Click += async delegate { await ToggleLocalizationAsync(); };
             startButton = statusPill;
             card.Controls.Add(statusPill);
 
             infoLabel = FixedPixelLabel(BuildInfoText(), 12F, FontStyle.Regular, Color.FromArgb(103, 107, 129));
             infoLabel.Font = new Font("Segoe UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            infoLabel.SetBounds(U(28), U(121), U(272), U(28));
+            infoLabel.SetBounds(U(28), U(132), U(272), U(28));
             infoLabel.TextAlign = ContentAlignment.MiddleCenter;
             card.Controls.Add(infoLabel);
         }
