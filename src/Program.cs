@@ -95,6 +95,7 @@ namespace AntigravityZhAssistant
         private Label unknownLabel;
         private Label scanLabel;
         private StatusPillButton statusPill;
+        private CardPanel onboardingCard;
         private Label infoLabel;
         private Image onboardingGlow;
         private readonly NotifyIcon trayIcon;
@@ -460,8 +461,8 @@ namespace AntigravityZhAssistant
             adaptCheckBox.Text = "自动更新";
             adaptCheckBox.Font = new Font("Microsoft YaHei UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
             adaptCheckBox.Checked = GetSetting("AutoAdapt", true) && GetSetting("AutoPack", true);
-            adaptCheckBox.SetBounds(U(164), U(454), U(80), U(24));
-            Controls.Add(adaptCheckBox);
+            adaptCheckBox.SetBounds(U(86), U(123), U(80), U(24));
+            onboardingCard.Controls.Add(adaptCheckBox);
 
             packUpdateCheckBox = new CheckBox();
             packUpdateCheckBox.Checked = adaptCheckBox.Checked;
@@ -471,8 +472,8 @@ namespace AntigravityZhAssistant
             startupCheckBox.Text = "开机启动";
             startupCheckBox.Font = new Font("Microsoft YaHei UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
             startupCheckBox.Checked = IsAutoStartEnabled();
-            startupCheckBox.SetBounds(U(256), U(454), U(80), U(24));
-            Controls.Add(startupCheckBox);
+            startupCheckBox.SetBounds(U(178), U(123), U(80), U(24));
+            onboardingCard.Controls.Add(startupCheckBox);
 
             hideButton = new Button();
             hideButton.Visible = false;
@@ -488,8 +489,9 @@ namespace AntigravityZhAssistant
 
         private void DrawOnboardingCard()
         {
-            CardPanel card = new CardPanel();
-            card.SetBounds(U(78), U(269), U(344), U(182));
+            onboardingCard = new CardPanel();
+            CardPanel card = onboardingCard;
+            card.SetBounds(U(78), U(269), U(344), U(168));
             card.BackColor = Color.FromArgb(236, 239, 242);
             card.BorderColor = Color.FromArgb(215, 217, 222);
             card.CornerRadius = U(12);
@@ -499,7 +501,7 @@ namespace AntigravityZhAssistant
                 FontStyle.Regular, Color.FromArgb(76, 79, 105));
             assistantVersion.Font = new Font("Microsoft YaHei UI", 14F * uiScale,
                 FontStyle.Bold, GraphicsUnit.Pixel);
-            assistantVersion.SetBounds(U(24), U(24), U(296), U(20));
+            assistantVersion.SetBounds(U(24), U(21), U(296), U(20));
             assistantVersion.TextAlign = ContentAlignment.MiddleCenter;
             card.Controls.Add(assistantVersion);
 
@@ -507,16 +509,16 @@ namespace AntigravityZhAssistant
             statusPill.Text = "尚未汉化";
             statusPill.Font = new Font("Microsoft YaHei UI", 15F * uiScale,
                 FontStyle.Bold, GraphicsUnit.Pixel);
-            statusPill.SetBounds(U(28), U(68), U(272), U(40));
+            statusPill.SetBounds(U(28), U(62), U(272), U(40));
             statusPill.Click += async delegate { await ToggleLocalizationAsync(); };
             startButton = statusPill;
             card.Controls.Add(statusPill);
 
             infoLabel = FixedPixelLabel(BuildInfoText(), 12F, FontStyle.Regular, Color.FromArgb(103, 107, 129));
             infoLabel.Font = new Font("Segoe UI", 12F * uiScale, FontStyle.Regular, GraphicsUnit.Pixel);
-            infoLabel.SetBounds(U(28), U(132), U(272), U(28));
+            infoLabel.SetBounds(U(114), U(454), U(272), U(24));
             infoLabel.TextAlign = ContentAlignment.MiddleCenter;
-            card.Controls.Add(infoLabel);
+            Controls.Add(infoLabel);
         }
 
         private string BuildInfoText()
@@ -544,7 +546,7 @@ namespace AntigravityZhAssistant
             using (SolidBrush titleButtons = new SolidBrush(Color.FromArgb(228, 230, 234)))
                 e.Graphics.FillRectangle(titleButtons, 364, 0, 136, 32);
 
-            using (GraphicsPath shadow = CreateRoundedPath(new Rectangle(78, 271, 344, 182), 12))
+            using (GraphicsPath shadow = CreateRoundedPath(new Rectangle(78, 271, 344, 168), 12))
             using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(22, 0, 0, 0)))
                 e.Graphics.FillPath(shadowBrush, shadow);
 
