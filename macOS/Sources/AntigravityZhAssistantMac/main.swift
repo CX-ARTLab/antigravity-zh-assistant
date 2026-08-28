@@ -94,7 +94,7 @@ private final class DevToolsDiscovery {
         throw AssistantError.noTarget
     }
 
-    private func portCandidates() throws -> [URL] {
+    private func portCandidates() -> [URL] {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let paths = [
             home.appendingPathComponent("Library/Application Support/Antigravity/DevToolsActivePort"),
