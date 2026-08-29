@@ -15,6 +15,7 @@
   "Checking Application Version Number": "检查应用版本号",
   "CLI Project": "CLI 项目",
   "CitC Settings": "CitC 设置",
+  "Command Palette": "命令面板",
   "Configure a chat bot so you can use Jetski directly from Google Chat.": "配置聊天机器人，以便直接在 Google Chat 中使用 Jetski。",
   "Configure editor-specific behaviors and shortcuts.": "配置编辑器专用行为和快捷键。",
   "Configure tab completion, suggestions, and navigation behavior.": "配置 Tab 补全、建议和导航行为。",
@@ -49,6 +50,7 @@
   "Plugins": "插件",
   "Regroup Google3 Chats": "重新归类 Google3 对话",
   "Remote Control": "远程控制",
+  "Reset Zoom": "重置缩放",
   "Selection Actions": "选择文本操作",
   "Setup": "设置",
   "Setup Jetski Chat": "设置 Jetski 对话",
@@ -61,6 +63,8 @@
   "Try out early-stage features before they ship. These may change or be removed at any time.": "抢先体验尚未正式发布的功能；这些功能可能随时变更或移除。",
   "We recommend attaching logs. Attaching logs will help the Antigravity team act on and prioritize your feedback.": "建议附加日志，以帮助 Antigravity 团队处理反馈并确定优先级。",
   "Work with local agents from another device.": "从其他设备使用本机智能体。",
+  "Zoom In": "放大",
+  "Zoom Out": "缩小",
   "for more information (this migration is experimental).": "了解更多信息（此迁移功能仍处于实验阶段）。",
   "or join the": "或加入"
 }
