@@ -97,7 +97,6 @@ namespace AntigravityZhAssistant
         private StatusPillButton statusPill;
         private CardPanel onboardingCard;
         private Label infoLabel;
-        private Image onboardingGlow;
         private readonly NotifyIcon trayIcon;
         private readonly ToolStripMenuItem trayStartupItem;
         private readonly System.Windows.Forms.Timer monitorTimer;
@@ -401,8 +400,6 @@ namespace AntigravityZhAssistant
             Padding = Padding.Empty;
             DoubleBuffered = true;
             ApplyRoundedRegion(this, U(8));
-            if (onboardingGlow != null) onboardingGlow.Dispose();
-            onboardingGlow = null;
             Paint += DrawOnboardingBackground;
 
             WindowGlyphButton minimizeButton = new WindowGlyphButton("\uE921");
@@ -531,17 +528,10 @@ namespace AntigravityZhAssistant
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             GraphicsState state = e.Graphics.Save();
             e.Graphics.ScaleTransform(uiScale, uiScale);
-            if (onboardingGlow != null)
-            {
-                using (ImageAttributes attributes = new ImageAttributes())
-                {
-                    ColorMatrix matrix = new ColorMatrix();
-                    matrix.Matrix33 = 0.20F;
-                    attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-                    e.Graphics.DrawImage(onboardingGlow, new Rectangle(90, -26, 319, 333),
-                        0, 0, onboardingGlow.Width, onboardingGlow.Height, GraphicsUnit.Pixel, attributes);
-                }
-            }
+            DrawSoftGlow(e.Graphics, new Rectangle(142, 57, 148, 158), Color.FromArgb(66, 53, 206, 255));
+            DrawSoftGlow(e.Graphics, new Rectangle(198, 43, 148, 148), Color.FromArgb(54, 255, 197, 76));
+            DrawSoftGlow(e.Graphics, new Rectangle(230, 61, 134, 144), Color.FromArgb(48, 255, 91, 119));
+            DrawSoftGlow(e.Graphics, new Rectangle(183, 101, 151, 150), Color.FromArgb(48, 102, 105, 255));
 
             using (SolidBrush titleButtons = new SolidBrush(Color.FromArgb(228, 230, 234)))
                 e.Graphics.FillRectangle(titleButtons, 364, 0, 136, 32);
@@ -556,6 +546,21 @@ namespace AntigravityZhAssistant
                 new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1), U(8)))
             using (Pen pen = new Pen(Color.FromArgb(65, 68, 78)))
                 e.Graphics.DrawPath(pen, border);
+        }
+
+        private static void DrawSoftGlow(Graphics graphics, Rectangle bounds, Color centerColor)
+        {
+            using (GraphicsPath path = new GraphicsPath())
+            {
+                path.AddEllipse(bounds);
+                using (PathGradientBrush brush = new PathGradientBrush(path))
+                {
+                    brush.CenterColor = centerColor;
+                    brush.SurroundColors = new[] { Color.FromArgb(0, centerColor.R, centerColor.G, centerColor.B) };
+                    brush.FocusScales = new PointF(0.08F, 0.08F);
+                    graphics.FillEllipse(brush, bounds);
+                }
+            }
         }
 
         private void AutoUpdateCheckChanged(object sender, EventArgs e)
@@ -1708,7 +1713,6 @@ namespace AntigravityZhAssistant
                 trayIcon.Dispose();
                 localHttp.Dispose();
                 updateHttp.Dispose();
-                if (onboardingGlow != null) onboardingGlow.Dispose();
             }
             base.Dispose(disposing);
         }
