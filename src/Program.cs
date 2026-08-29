@@ -23,8 +23,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Google Antigravity 离线界面汉化伴侣")]
 [assembly: AssemblyCompany("Local Companion")]
 [assembly: AssemblyProduct("Antigravity 中文助手")]
-[assembly: AssemblyVersion("0.6.10.0")]
-[assembly: AssemblyFileVersion("0.6.10.0")]
+[assembly: AssemblyVersion("0.6.11.0")]
+[assembly: AssemblyFileVersion("0.6.11.0")]
 
 namespace AntigravityZhAssistant
 {
@@ -103,6 +103,8 @@ namespace AntigravityZhAssistant
         private readonly HttpClient localHttp;
         private readonly HttpClient updateHttp;
         private readonly string translationScriptTemplate;
+        private readonly Dictionary<string, string> bundledTranslations;
+        private readonly string bundledPackVersion;
         private readonly EventWaitHandle activationEvent;
         private readonly Thread activationThread;
         private bool busy;
@@ -138,6 +140,8 @@ namespace AntigravityZhAssistant
             this.startupMode = startupMode;
             this.activationEvent = activationEvent;
             translationScriptTemplate = LoadEmbeddedText("TranslatorJs");
+            bundledTranslations = LoadEmbeddedTranslations();
+            bundledPackVersion = LoadEmbeddedPackVersion();
             Directory.CreateDirectory(DataDirectory);
             HttpClientHandler handler = new HttpClientHandler();
             handler.UseProxy = false;
@@ -145,7 +149,7 @@ namespace AntigravityZhAssistant
             localHttp.Timeout = TimeSpan.FromSeconds(4);
             updateHttp = new HttpClient();
             updateHttp.Timeout = TimeSpan.FromSeconds(8);
-            updateHttp.DefaultRequestHeaders.UserAgent.ParseAdd("AntigravityZhAssistant/0.6.10");
+            updateHttp.DefaultRequestHeaders.UserAgent.ParseAdd("AntigravityZhAssistant/0.6.11");
 
             Text = AppName;
             StartPosition = FormStartPosition.CenterScreen;
@@ -1234,8 +1238,9 @@ namespace AntigravityZhAssistant
 
         private string BuildTranslationScript()
         {
-            Dictionary<string, string> translations = new Dictionary<string, string>(StringComparer.Ordinal);
-            if (packUpdateCheckBox.Checked && File.Exists(PackPath))
+            Dictionary<string, string> translations = new Dictionary<string, string>(bundledTranslations, StringComparer.Ordinal);
+            bool localPackIsNewer = ComparePackVersions(GetPackVersion(), bundledPackVersion) > 0;
+            if (packUpdateCheckBox.Checked && localPackIsNewer && File.Exists(PackPath))
             {
                 try
                 {
@@ -1334,6 +1339,7 @@ namespace AntigravityZhAssistant
                 string remoteVersion = ReadString(manifest, "version");
                 string packUrl = ReadString(manifest, "packUrl");
                 if (string.IsNullOrWhiteSpace(remoteVersion) || string.IsNullOrWhiteSpace(packUrl)) return;
+                if (ComparePackVersions(remoteVersion, bundledPackVersion) <= 0) return;
                 if (string.Equals(GetPackVersion(), remoteVersion, StringComparison.OrdinalIgnoreCase) && File.Exists(PackPath)) return;
 
                 string packJson = await updateHttp.GetStringAsync(packUrl);
@@ -1378,6 +1384,15 @@ namespace AntigravityZhAssistant
                     key.SetValue("TranslationPackVersion", version, RegistryValueKind.String);
             }
             catch { }
+        }
+
+        private static int ComparePackVersions(string left, string right)
+        {
+            Version leftVersion;
+            Version rightVersion;
+            if (Version.TryParse(left, out leftVersion) && Version.TryParse(right, out rightVersion))
+                return leftVersion.CompareTo(rightVersion);
+            return string.Compare(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         }
 
         private void SaveUnknownReport()
@@ -1657,6 +1672,21 @@ namespace AntigravityZhAssistant
                 if (stream == null) throw new InvalidOperationException("缺少内置汉化词典。");
                 using (StreamReader reader = new StreamReader(stream, Encoding.UTF8)) return reader.ReadToEnd();
             }
+        }
+
+        private static Dictionary<string, string> LoadEmbeddedTranslations()
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            Dictionary<string, string> translations = serializer.Deserialize<Dictionary<string, string>>(
+                LoadEmbeddedText("BundledTranslationPack"));
+            return translations ?? new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        private static string LoadEmbeddedPackVersion()
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            IDictionary manifest = serializer.DeserializeObject(LoadEmbeddedText("BundledTranslationManifest")) as IDictionary;
+            return manifest == null ? string.Empty : ReadString(manifest, "version") ?? string.Empty;
         }
 
         private static Image LoadEmbeddedImage(string resourceName)

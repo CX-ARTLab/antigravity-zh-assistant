@@ -27,6 +27,8 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
     /reference:System.Net.Http.dll `
     /reference:System.Web.Extensions.dll `
     "/resource:$sourceRoot\translator.js,TranslatorJs" `
+    "/resource:$projectRoot\translation\translation-pack.json,BundledTranslationPack" `
+    "/resource:$projectRoot\translation\manifest.json,BundledTranslationManifest" `
     "/resource:$sourceRoot\Assets\assistant-icon.ico,AssistantIcon" `
     "/resource:$sourceRoot\Assets\assistant-icon.png,AssistantIconPng" `
     "/out:$outputPath" `

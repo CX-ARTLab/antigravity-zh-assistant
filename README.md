@@ -30,7 +30,7 @@ Antigravity 中文助手是一个面向 Windows 和 macOS 的非官方运行时�
 
 ## 翻译包
 
-翻译词典位于 [`translation/translation-pack.json`](translation/translation-pack.json)，版本信息和下载地址位于 [`translation/manifest.json`](translation/manifest.json)。词典可以独立发布；助手启动时会在启用“自动更新”时检查新版本。
+翻译词典位于 [`translation/translation-pack.json`](translation/translation-pack.json)，版本信息和下载地址位于 [`translation/manifest.json`](translation/manifest.json)。Windows 发布版会内置构建时的完整词典，离线也可使用；启用“自动更新”后还会检查并加载版本更新的远程词典。词典变化会触发重新注入，不需要重启 Antigravity。
 
 ## 本地构建
 

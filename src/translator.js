@@ -1,11 +1,12 @@
 (() => {
-  const VERSION = "0.6.6";
+  const VERSION = "0.6.11";
   const DISABLED_KEY = "__antigravityZhAssistantDisabled";
   const AUTO_ADAPT = __AUTO_ADAPT__;
   const extraDictionary = Object.freeze(__EXTRA_TRANSLATIONS__);
+  const PACK_SIGNATURE = JSON.stringify(extraDictionary);
   const previousAssistant = window.__antigravityZhAssistant;
   if (previousAssistant) {
-    if (previousAssistant.version === VERSION && localStorage.getItem(DISABLED_KEY) !== "1") {
+    if (previousAssistant.version === VERSION && previousAssistant.packSignature === PACK_SIGNATURE && localStorage.getItem(DISABLED_KEY) !== "1") {
       window.__antigravityZhAssistant.scan(document);
       return { ok: true, version: window.__antigravityZhAssistant.version, reused: true };
     }
@@ -639,6 +640,9 @@
       if (/https?:|\\|\/Users\/|[{}<>]|^[A-Za-z]:/.test(text)) continue;
       if (/\.(?:cs|csproj|sln|json|js|ts|tsx|jsx|zip|png|jpg|jpeg|gif|svg|md|txt|log)$/i.test(text)) continue;
       if (/^(?:Implementation Plan|Google Antigravity Current UI Design)$/i.test(text)) continue;
+      if (/^\/\//.test(text)) continue;
+      if (/^[a-z_$][a-z0-9_$]*(?:\.[a-z_$][a-z0-9_$]*)*[),;]?$/i.test(text) && text === text.toLowerCase()) continue;
+      if (/^[a-z]+(?:\s+[a-z]+){1,2}$/.test(text)) continue;
       if (/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(text)) continue;
       if (/^[A-Z][A-Za-z0-9_.-]*\s?\d+(?:\.\d+)+/.test(text)) continue;
       if (/^[\w.+-]+@[\w.-]+$/.test(text)) continue;
@@ -780,7 +784,7 @@
     return { ok: true, version: VERSION, restored: true };
   }
 
-  if (previousAssistant && previousAssistant.version !== VERSION) restoreLegacy(document);
+  if (previousAssistant) restoreLegacy(document);
   delete window.__antigravityZhAssistant;
   if (localStorage.getItem(DISABLED_KEY) === "1") {
     restoreLegacy(document);
@@ -796,6 +800,6 @@
     attributeFilter: translatedAttributes
   });
 
-  window.__antigravityZhAssistant = { version: VERSION, scan, observer, collectUnknown, restore };
+  window.__antigravityZhAssistant = { version: VERSION, packSignature: PACK_SIGNATURE, scan, observer, collectUnknown, restore };
   return { ok: true, version: VERSION, reused: false };
 })();
