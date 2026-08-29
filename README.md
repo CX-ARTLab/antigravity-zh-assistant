@@ -11,7 +11,7 @@ Antigravity 中文助手是一个面向 Windows 的非官方运行时汉化伴�
 
 这是一个便携版程序：移动整个解压文件夹即可移动助手，卸载时直接删除该文件夹即可。
 
-![Uploading image.png…]()
+<img width="1611" height="750" alt="image" src="https://github.com/user-attachments/assets/2532c6a0-563b-480e-b211-bf62bf9a9336" />
 
 
 ## 当前功能
