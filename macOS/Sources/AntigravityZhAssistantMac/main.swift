@@ -4,7 +4,7 @@ import Foundation
 import Darwin
 
 private let appName = "Antigravity 中文助手"
-private let appVersion = "0.6.7"
+private let appVersion = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "0.6.11"
 private let manifestURL = URL(string: "https://raw.githubusercontent.com/CX-ARTLab/antigravity-zh-assistant/main/translation/manifest.json")!
 
 private func assistantIconImage() -> NSImage {
@@ -71,10 +71,10 @@ private final class CDPClient {
             }
             guard let object = try JSONSerialization.jsonObject(with: payload) as? [String: Any] else { continue }
             guard let responseID = object["id"] as? Int, responseID == id else { continue }
-            if let exception = object["exceptionDetails"] as? [String: Any] {
+            let result = object["result"] as? [String: Any]
+            if let exception = result?["exceptionDetails"] as? [String: Any] {
                 throw NSError(domain: "CDP", code: 1, userInfo: [NSLocalizedDescriptionKey: String(describing: exception)])
             }
-            let result = object["result"] as? [String: Any]
             return (result?["result"] as? [String: Any])?["value"]
         }
     }
@@ -139,8 +139,9 @@ private final class AppModel: ObservableObject {
 
     init() {
         autoUpdate = UserDefaults.standard.object(forKey: "AutoUpdate") as? Bool ?? true
-        launchAtLogin = UserDefaults.standard.object(forKey: "LaunchAtLogin") as? Bool ?? false
-        translationPack = Self.loadJSON(named: "translation-pack", ext: "json") ?? [:]
+        launchAtLogin = LaunchAtLogin.isEnabled
+        translationPack = Self.loadTranslationPack()
+        antigravityVersion = detectAntigravityVersion()
         monitorTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -158,13 +159,23 @@ private final class AppModel: ObservableObject {
         status = "正在连接"
         detail = "正在连接 Antigravity 并应用汉化……"
         do {
-            if autoUpdate { try await updateTranslationPack() }
+            var updateFailed = false
+            if autoUpdate {
+                do { try await updateTranslationPack() }
+                catch { updateFailed = true }
+            }
             let targets = try await discovery.targets()
             let script = try makeTranslationScript()
             var found = Set<String>()
             for target in targets {
                 let client = CDPClient(url: target.webSocketURL)
-                _ = try await client.evaluate(script)
+                _ = try await client.evaluate("localStorage.removeItem('__antigravityZhAssistantDisabled'); true")
+                guard let outcome = try await client.evaluate(script) as? [String: Any],
+                      outcome["ok"] as? Bool == true,
+                      outcome["disabled"] == nil else {
+                    client.close()
+                    throw AssistantError.invalidResponse
+                }
                 if let values = try await client.evaluate("window.__antigravityZhAssistant?.collectUnknown?.() || []") as? [String] {
                     found.formUnion(values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) })
                 }
@@ -176,7 +187,8 @@ private final class AppModel: ObservableObject {
             saveReport()
             isLocalized = true
             status = "汉化已生效"
-            detail = found.isEmpty ? "界面已扫描，当前没有发现待适配的系统词条。" : "发现 \(found.count) 条待适配系统文字。"
+            let scanDetail = found.isEmpty ? "界面已扫描，当前没有发现待适配的系统词条。" : "发现 \(found.count) 条待适配系统文字。"
+            detail = updateFailed ? "\(scanDetail) 自动更新暂不可用，已使用本地词典。" : scanDetail
         } catch {
             if !silent { status = "暂未连接" }
             detail = error.localizedDescription
@@ -219,10 +231,12 @@ private final class AppModel: ObservableObject {
               let version = manifest["version"] as? String,
               let packString = manifest["packUrl"] as? String,
               let url = URL(string: packString) else { return }
+        let bundledVersion = Self.bundledTranslationPackVersion()
+        guard Self.comparePackVersions(version, bundledVersion) == .orderedDescending else { return }
         if UserDefaults.standard.string(forKey: "TranslationPackVersion") == version { return }
         let (packData, _) = try await URLSession.shared.data(from: url)
         guard let pack = try JSONSerialization.jsonObject(with: packData) as? [String: String], !pack.isEmpty else { return }
-        translationPack = pack
+        translationPack = Self.addingMacOSOverrides(to: pack)
         try packData.write(to: Self.dataDirectory().appendingPathComponent("translation-pack.json"), options: .atomic)
         UserDefaults.standard.set(version, forKey: "TranslationPackVersion")
     }
@@ -291,13 +305,65 @@ private final class AppModel: ObservableObject {
         guard let url = resourceURL(name, ext: ext), let data = try? Data(contentsOf: url) else { return nil }
         return try? JSONDecoder().decode(T.self, from: data)
     }
+
+    private static func loadTranslationPack() -> [String: String] {
+        let bundled = addingMacOSOverrides(to: loadJSON(named: "translation-pack", ext: "json") ?? [:])
+        let bundledVersion = bundledTranslationPackVersion()
+        let cachedVersion = UserDefaults.standard.string(forKey: "TranslationPackVersion") ?? ""
+        let cachedURL = dataDirectory().appendingPathComponent("translation-pack.json")
+        if comparePackVersions(cachedVersion, bundledVersion) == .orderedDescending,
+           let data = try? Data(contentsOf: cachedURL),
+           let cached = try? JSONDecoder().decode([String: String].self, from: data),
+           !cached.isEmpty { return addingMacOSOverrides(to: cached) }
+        return bundled
+    }
+
+    private static func bundledTranslationPackVersion() -> String {
+        let manifest: [String: String] = loadJSON(named: "translation-manifest", ext: "json") ?? [:]
+        return manifest["version"] ?? ""
+    }
+
+    private static func comparePackVersions(_ left: String, _ right: String) -> ComparisonResult {
+        left.compare(right, options: [.numeric, .caseInsensitive])
+    }
+
+    private static func addingMacOSOverrides(to pack: [String: String]) -> [String: String] {
+        var result = pack
+        let overrides = [
+            "Configures how the agent tries to access files outside of its working folders.": "配置智能体尝试访问工作文件夹以外文件的方式。",
+            "Controls whether terminal commands require your approval before running.": "控制终端命令在运行前是否需要你的批准。",
+            "Enable Sandbox Mode (Preview)": "启用沙盒模式（预览）",
+            "Guidelines for interacting with GitHub and request permissions from the user when commands fail due to restrictions in the agent environment.": "用于与 GitHub 交互的指南；当命令因智能体环境限制而失败时，请向用户请求权限。",
+            "Install IDE": "安装 IDE",
+            "No MCP servers installed": "未安装 MCP 服务器",
+            "Outside of folders file access policy": "工作文件夹外的文件访问策略",
+            "Proceed in Sandbox": "在沙盒中继续",
+            "Restricts agent tools to a secure, isolated local sandbox.": "将智能体工具限制在安全、隔离的本地沙盒中。",
+            "Terminal Command Auto Execution": "终端命令自动执行",
+            "There was an unexpected issue setting up your account.": "设置账号时出现意外问题。",
+            "Continue with different account": "使用其他账号继续",
+            "Having trouble? Let us know": "遇到问题？请告诉我们",
+            "There are no customizations enabled.": "当前未启用任何自定义项。",
+            "Use Add MCP to browse the store, or add a custom server via the MCP config.": "使用“添加 MCP”浏览商店，或通过 MCP 配置添加自定义服务器。"
+        ]
+        for (english, chinese) in overrides { result[english] = chinese }
+        return result
+    }
 }
 
 private enum LaunchAtLogin {
     static let label = "com.cxartlab.antigravity-zh-assistant"
 
+    static var isEnabled: Bool {
+        FileManager.default.fileExists(atPath: agentURL.path)
+    }
+
+    private static var agentURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/LaunchAgents/\(label).plist")
+    }
+
     static func setEnabled(_ enabled: Bool) {
-        let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/LaunchAgents/\(label).plist")
+        let url = agentURL
         if enabled {
             guard let executable = Bundle.main.executablePath else { return }
             let plist: [String: Any] = ["Label": label, "ProgramArguments": [executable], "RunAtLoad": true, "ProcessType": "Interactive"]
@@ -305,7 +371,7 @@ private enum LaunchAtLogin {
             (plist as NSDictionary).write(to: url, atomically: true)
             runLaunchctl(["bootstrap", "gui/\(getuid())", url.path])
         } else {
-            runLaunchctl(["bootout", "gui/\(getuid())", url.path])
+            runLaunchctl(["bootout", "gui/\(getuid())/\(label)"])
             try? FileManager.default.removeItem(at: url)
         }
     }
@@ -314,7 +380,33 @@ private enum LaunchAtLogin {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
         task.arguments = arguments
-        try? task.run()
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch { }
+    }
+}
+
+private struct WindowConfigurator: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { configure(view.window) }
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        DispatchQueue.main.async { configure(view.window) }
+    }
+
+    private func configure(_ window: NSWindow?) {
+        guard let window else { return }
+        let size = NSSize(width: 500, height: 550)
+        guard window.contentView?.frame.size != size || window.styleMask.contains(.resizable) else { return }
+        window.setContentSize(size)
+        window.minSize = size
+        window.maxSize = size
+        window.styleMask.remove(.resizable)
+        window.center()
     }
 }
 
@@ -349,7 +441,7 @@ private struct ContentView: View {
                         .frame(width: 64, height: 64)
                 }
                 .frame(width: 64, height: 64)
-                Text("Welcome to Antigravity")
+                Text("欢迎使用 Antigravity")
                     .font(.system(size: 30, weight: .regular, design: .rounded))
                     .foregroundColor(Color(red: 0.30, green: 0.31, blue: 0.42))
                     .padding(.top, 26)
@@ -373,6 +465,7 @@ private struct ContentView: View {
                     }
                     .toggleStyle(.checkbox)
                     .font(.system(size: 14))
+                    .foregroundColor(Color(red: 0.30, green: 0.31, blue: 0.42))
                     .padding(.top, 18)
                 }
                 .frame(width: 344, height: 168)
@@ -380,17 +473,21 @@ private struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.24)))
                 .padding(.top, 48)
-                Text("Antigravity 未检测  ·  待适配 \(model.unknownCount)")
+                Text("Antigravity \(model.antigravityVersion)  ·  待适配 \(model.unknownCount)")
                     .font(.system(size: 14))
                     .foregroundColor(Color(red: 0.40, green: 0.42, blue: 0.52))
                     .padding(.top, 16)
                 if !model.detail.isEmpty {
-                    Text(model.detail).font(.system(size: 11)).foregroundColor(.secondary).padding(.top, 8)
+                    Text(model.detail)
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(red: 0.40, green: 0.42, blue: 0.52))
+                        .padding(.top, 8)
                 }
                 Spacer()
             }
         }
         .frame(width: 500, height: 550)
+        .background(WindowConfigurator())
     }
 }
 
