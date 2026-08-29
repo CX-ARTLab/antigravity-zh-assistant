@@ -44,7 +44,7 @@ Antigravity 中文助手是一个面向 Windows 和 macOS 的非官方运行时�
 
 ## macOS 版本
 
-仓库同时提供原生 SwiftUI macOS 目标，支持 macOS 12 及以上的 Intel 和 Apple Silicon 设备。macOS 版复用同一翻译词典和 Chromium 调试注入逻辑，并使用 LaunchAgent 实现“开机启动”。
+仓库同时提供原生 SwiftUI macOS 目标，仅支持 macOS 12 及以上的 Apple Silicon（M1、M2、M3、M4 及后续芯片）设备。macOS 版复用同一翻译词典和 Chromium 调试注入逻辑，并使用 LaunchAgent 实现“开机启动”。
 
 在 Mac 上构建：
 
@@ -52,7 +52,7 @@ Antigravity 中文助手是一个面向 Windows 和 macOS 的非官方运行时�
 bash macOS/build-macos.sh
 ```
 
-构建脚本会生成 `dist/AntigravityZhAssistant-macOS-intel.zip` 或 `dist/AntigravityZhAssistant-macOS-apple-silicon.zip`。GitHub Actions 会分别构建两种架构；首次发布前仍建议在实际 Mac 上验证 Antigravity 的调试接口和系统权限。
+构建脚本会生成 `dist/AntigravityZhAssistant-macOS-apple-silicon.zip`。GitHub Actions 仅构建 Apple Silicon 版本；首次发布前仍建议在实际 Mac 上验证 Antigravity 的调试接口和系统权限。
 
 当前 macOS 构建未附带 Apple Developer 签名和公证；首次打开时如果 macOS 提示无法验证开发者，请在 Finder 中右键应用选择“打开”，或在“系统设置 → 隐私与安全性”中允许运行。
 

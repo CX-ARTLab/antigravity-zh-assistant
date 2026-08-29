@@ -3,11 +3,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARCH="$(uname -m)"
-case "$ARCH" in
-  arm64) ARCH_LABEL="apple-silicon" ;;
-  x86_64) ARCH_LABEL="intel" ;;
-  *) ARCH_LABEL="$ARCH" ;;
-esac
+if [[ "$ARCH" != "arm64" ]]; then
+  echo "This macOS build supports Apple Silicon (arm64) only; detected: $ARCH" >&2
+  exit 1
+fi
+ARCH_LABEL="apple-silicon"
 
 RESOURCES="$ROOT/macOS/Resources"
 mkdir -p "$RESOURCES"
