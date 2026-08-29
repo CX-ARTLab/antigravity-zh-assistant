@@ -10,7 +10,9 @@ Antigravity 中文助手是一个面向 Windows 的非官方运行时汉化伴�
 4. 点击紫色状态按钮应用或恢复汉化；“自动更新”会定期检查并重新应用翻译，“开机启动”可让助手随 Windows 启动。
 
 这是一个便携版程序：移动整个解压文件夹即可移动助手，卸载时直接删除该文件夹即可。
-<img width="1292" height="718" alt="image" src="https://github.com/user-attachments/assets/4edce213-d055-41f1-b53b-281b902a01b1" />
+
+![Uploading image.png…]()
+
 
 ## 当前功能
 
