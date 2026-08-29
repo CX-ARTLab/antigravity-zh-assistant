@@ -18,6 +18,7 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
     /target:winexe `
     /platform:anycpu `
     /optimize+ `
+    "/win32icon:$sourceRoot\Assets\assistant-icon.ico" `
     "/win32manifest:$sourceRoot\app.manifest" `
     /reference:System.dll `
     /reference:System.Core.dll `
@@ -26,10 +27,8 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
     /reference:System.Net.Http.dll `
     /reference:System.Web.Extensions.dll `
     "/resource:$sourceRoot\translator.js,TranslatorJs" `
-    "/resource:$sourceRoot\Assets\assistant-background.png,AssistantBackground" `
-    "/resource:$sourceRoot\Assets\google-antigravity-lockup.png,BrandLockup" `
-    "/resource:$sourceRoot\Assets\antigravity-glow.png,AntigravityGlow" `
-    "/resource:$sourceRoot\Assets\antigravity-logo.png,AntigravityLogo" `
+    "/resource:$sourceRoot\Assets\assistant-icon.ico,AssistantIcon" `
+    "/resource:$sourceRoot\Assets\assistant-icon.png,AssistantIconPng" `
     "/out:$outputPath" `
     "$sourceRoot\Program.cs"
 

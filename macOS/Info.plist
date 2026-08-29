@@ -10,6 +10,8 @@
 	<string>com.cxartlab.antigravity-zh-assistant</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleIconFile</key>
+	<string>AssistantIcon</string>
 	<key>CFBundleName</key>
 	<string>Antigravity 中文助手</string>
 	<key>CFBundlePackageType</key>

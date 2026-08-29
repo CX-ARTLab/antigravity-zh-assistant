@@ -1,6 +1,6 @@
 # Antigravity 中文助手
 
-Antigravity 中文助手是一个面向 Windows 的非官方运行时汉化伴侣。它通过 Antigravity 的本地调试接口加载翻译，不修改 Antigravity 官方安装文件。翻译器只处理可识别的系统界面元素，默认跳过输入框、代码块、可编辑区域以及对话/项目内容。
+Antigravity 中文助手是一个面向 Windows 和 macOS 的非官方运行时汉化伴侣。它通过 Antigravity 的本地调试接口加载翻译，不修改 Antigravity 官方安装文件。翻译器只处理可识别的系统界面元素，默认跳过输入框、代码块、可编辑区域以及对话/项目内容。
 
 ## 普通用户使用
 
@@ -60,5 +60,5 @@ bash macOS/build-macos.sh
 
 助手只处理 Antigravity 的系统界面文本；输入框、代码块、可编辑区域、文件名和用户产物标题会被排除。待适配记录仅保存在本机，除非用户主动提交。
 
-本项目不是 Google 或 Antigravity 官方产品，与其不存在隶属或授权关系。“Google”和“Antigravity”及相关品牌资源归其各自权利人所有。MIT 许可证仅适用于本仓库中的源代码，不授予任何品牌或商标使用权。
+本项目不是 Google 或 Antigravity 官方产品，与其不存在隶属或授权关系。助手图标为本项目原创设计，不使用官方 Antigravity 图标或 Google 品牌配色。“Google”和“Antigravity”及相关品牌资源归其各自权利人所有。MIT 许可证仅适用于本仓库中的源代码，不授予任何品牌或商标使用权。
 

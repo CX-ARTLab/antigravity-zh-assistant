@@ -158,7 +158,7 @@ namespace AntigravityZhAssistant
             ClientSize = new Size(820, 650);
             MinimumSize = new Size(760, 620);
             Font = new Font("Microsoft YaHei UI", 9F);
-            Icon = FindAntigravityIcon();
+            Icon = LoadAssistantIcon();
             BackColor = Color.FromArgb(248, 250, 253);
 
             GradientPanel header = new GradientPanel();
@@ -402,7 +402,7 @@ namespace AntigravityZhAssistant
             DoubleBuffered = true;
             ApplyRoundedRegion(this, U(8));
             if (onboardingGlow != null) onboardingGlow.Dispose();
-            onboardingGlow = LoadEmbeddedImage("AntigravityGlow");
+            onboardingGlow = null;
             Paint += DrawOnboardingBackground;
 
             WindowGlyphButton minimizeButton = new WindowGlyphButton("\uE921");
@@ -424,7 +424,7 @@ namespace AntigravityZhAssistant
             Controls.Add(closeButton);
 
             PictureBox brand = new PictureBox();
-            brand.Image = LoadEmbeddedImage("AntigravityLogo");
+            brand.Image = LoadEmbeddedImage("AssistantIconPng");
             brand.SizeMode = PictureBoxSizeMode.Zoom;
             brand.BackColor = Color.Transparent;
             brand.SetBounds(U(218), U(109), U(64), U(64));
@@ -1636,15 +1636,13 @@ namespace AntigravityZhAssistant
             return File.Exists(path) ? path : null;
         }
 
-        private static Icon FindAntigravityIcon()
+        private static Icon LoadAssistantIcon()
         {
-            try
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AssistantIcon"))
             {
-                string path = FindAntigravityExecutable();
-                if (path != null) return Icon.ExtractAssociatedIcon(path);
+                if (stream == null) return SystemIcons.Application;
+                using (Icon source = new Icon(stream)) return (Icon)source.Clone();
             }
-            catch { }
-            return SystemIcons.Application;
         }
 
         private static string LoadEmbeddedText(string resourceName)

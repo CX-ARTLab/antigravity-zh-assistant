@@ -7,6 +7,22 @@ private let appName = "Antigravity 中文助手"
 private let appVersion = "0.6.7"
 private let manifestURL = URL(string: "https://raw.githubusercontent.com/CX-ARTLab/antigravity-zh-assistant/main/translation/manifest.json")!
 
+private func assistantIconImage() -> NSImage {
+    if let bundled = Bundle.main.url(forResource: "assistant-icon", withExtension: "png"),
+       let image = NSImage(contentsOf: bundled) { return image }
+    let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let repositoryRoot = cwd.lastPathComponent == "macOS" ? cwd.deletingLastPathComponent() : cwd
+    let candidates = [
+        cwd.appendingPathComponent("Resources/assistant-icon.png"),
+        repositoryRoot.appendingPathComponent("macOS/Resources/assistant-icon.png"),
+        repositoryRoot.appendingPathComponent("src/Assets/assistant-icon.png")
+    ]
+    for url in candidates {
+        if let image = NSImage(contentsOf: url) { return image }
+    }
+    return NSImage(size: NSSize(width: 64, height: 64))
+}
+
 private enum AssistantError: LocalizedError {
     case noDebugPort
     case noTarget
@@ -310,9 +326,10 @@ private struct ContentView: View {
             Color(red: 0.93, green: 0.94, blue: 0.96).ignoresSafeArea()
             VStack(spacing: 0) {
                 Spacer().frame(height: 90)
-                Image(systemName: "a.circle.fill")
-                    .font(.system(size: 58, weight: .regular))
-                    .foregroundStyle(.blue)
+                Image(nsImage: assistantIconImage())
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 64, height: 64)
                 Text("Welcome to Antigravity")
                     .font(.system(size: 30, weight: .regular, design: .rounded))
                     .foregroundColor(Color(red: 0.30, green: 0.31, blue: 0.42))
