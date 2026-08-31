@@ -23,8 +23,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Google Antigravity 离线界面汉化伴侣")]
 [assembly: AssemblyCompany("Local Companion")]
 [assembly: AssemblyProduct("Antigravity 中文助手")]
-[assembly: AssemblyVersion("0.6.7.0")]
-[assembly: AssemblyFileVersion("0.6.7.0")]
+[assembly: AssemblyVersion("0.6.11.0")]
+[assembly: AssemblyFileVersion("0.6.11.0")]
 
 namespace AntigravityZhAssistant
 {
@@ -97,13 +97,14 @@ namespace AntigravityZhAssistant
         private StatusPillButton statusPill;
         private CardPanel onboardingCard;
         private Label infoLabel;
-        private Image onboardingGlow;
         private readonly NotifyIcon trayIcon;
         private readonly ToolStripMenuItem trayStartupItem;
         private readonly System.Windows.Forms.Timer monitorTimer;
         private readonly HttpClient localHttp;
         private readonly HttpClient updateHttp;
         private readonly string translationScriptTemplate;
+        private readonly Dictionary<string, string> bundledTranslations;
+        private readonly string bundledPackVersion;
         private readonly EventWaitHandle activationEvent;
         private readonly Thread activationThread;
         private bool busy;
@@ -139,6 +140,8 @@ namespace AntigravityZhAssistant
             this.startupMode = startupMode;
             this.activationEvent = activationEvent;
             translationScriptTemplate = LoadEmbeddedText("TranslatorJs");
+            bundledTranslations = LoadEmbeddedTranslations();
+            bundledPackVersion = LoadEmbeddedPackVersion();
             Directory.CreateDirectory(DataDirectory);
             HttpClientHandler handler = new HttpClientHandler();
             handler.UseProxy = false;
@@ -146,7 +149,7 @@ namespace AntigravityZhAssistant
             localHttp.Timeout = TimeSpan.FromSeconds(4);
             updateHttp = new HttpClient();
             updateHttp.Timeout = TimeSpan.FromSeconds(8);
-            updateHttp.DefaultRequestHeaders.UserAgent.ParseAdd("AntigravityZhAssistant/0.6.7");
+            updateHttp.DefaultRequestHeaders.UserAgent.ParseAdd("AntigravityZhAssistant/0.6.11");
 
             Text = AppName;
             StartPosition = FormStartPosition.CenterScreen;
@@ -158,7 +161,7 @@ namespace AntigravityZhAssistant
             ClientSize = new Size(820, 650);
             MinimumSize = new Size(760, 620);
             Font = new Font("Microsoft YaHei UI", 9F);
-            Icon = FindAntigravityIcon();
+            Icon = LoadAssistantIcon();
             BackColor = Color.FromArgb(248, 250, 253);
 
             GradientPanel header = new GradientPanel();
@@ -401,8 +404,6 @@ namespace AntigravityZhAssistant
             Padding = Padding.Empty;
             DoubleBuffered = true;
             ApplyRoundedRegion(this, U(8));
-            if (onboardingGlow != null) onboardingGlow.Dispose();
-            onboardingGlow = LoadEmbeddedImage("AntigravityGlow");
             Paint += DrawOnboardingBackground;
 
             WindowGlyphButton minimizeButton = new WindowGlyphButton("\uE921");
@@ -424,7 +425,7 @@ namespace AntigravityZhAssistant
             Controls.Add(closeButton);
 
             PictureBox brand = new PictureBox();
-            brand.Image = LoadEmbeddedImage("AntigravityLogo");
+            brand.Image = LoadEmbeddedImage("AssistantIconPng");
             brand.SizeMode = PictureBoxSizeMode.Zoom;
             brand.BackColor = Color.Transparent;
             brand.SetBounds(U(218), U(109), U(64), U(64));
@@ -531,17 +532,10 @@ namespace AntigravityZhAssistant
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             GraphicsState state = e.Graphics.Save();
             e.Graphics.ScaleTransform(uiScale, uiScale);
-            if (onboardingGlow != null)
-            {
-                using (ImageAttributes attributes = new ImageAttributes())
-                {
-                    ColorMatrix matrix = new ColorMatrix();
-                    matrix.Matrix33 = 0.20F;
-                    attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-                    e.Graphics.DrawImage(onboardingGlow, new Rectangle(90, -26, 319, 333),
-                        0, 0, onboardingGlow.Width, onboardingGlow.Height, GraphicsUnit.Pixel, attributes);
-                }
-            }
+            DrawSoftGlow(e.Graphics, new Rectangle(142, 57, 148, 158), Color.FromArgb(66, 53, 206, 255));
+            DrawSoftGlow(e.Graphics, new Rectangle(198, 43, 148, 148), Color.FromArgb(54, 255, 197, 76));
+            DrawSoftGlow(e.Graphics, new Rectangle(230, 61, 134, 144), Color.FromArgb(48, 255, 91, 119));
+            DrawSoftGlow(e.Graphics, new Rectangle(183, 101, 151, 150), Color.FromArgb(48, 102, 105, 255));
 
             using (SolidBrush titleButtons = new SolidBrush(Color.FromArgb(228, 230, 234)))
                 e.Graphics.FillRectangle(titleButtons, 364, 0, 136, 32);
@@ -556,6 +550,21 @@ namespace AntigravityZhAssistant
                 new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1), U(8)))
             using (Pen pen = new Pen(Color.FromArgb(65, 68, 78)))
                 e.Graphics.DrawPath(pen, border);
+        }
+
+        private static void DrawSoftGlow(Graphics graphics, Rectangle bounds, Color centerColor)
+        {
+            using (GraphicsPath path = new GraphicsPath())
+            {
+                path.AddEllipse(bounds);
+                using (PathGradientBrush brush = new PathGradientBrush(path))
+                {
+                    brush.CenterColor = centerColor;
+                    brush.SurroundColors = new[] { Color.FromArgb(0, centerColor.R, centerColor.G, centerColor.B) };
+                    brush.FocusScales = new PointF(0.08F, 0.08F);
+                    graphics.FillEllipse(brush, bounds);
+                }
+            }
         }
 
         private void AutoUpdateCheckChanged(object sender, EventArgs e)
@@ -1229,8 +1238,9 @@ namespace AntigravityZhAssistant
 
         private string BuildTranslationScript()
         {
-            Dictionary<string, string> translations = new Dictionary<string, string>(StringComparer.Ordinal);
-            if (packUpdateCheckBox.Checked && File.Exists(PackPath))
+            Dictionary<string, string> translations = new Dictionary<string, string>(bundledTranslations, StringComparer.Ordinal);
+            bool localPackIsNewer = ComparePackVersions(GetPackVersion(), bundledPackVersion) > 0;
+            if (packUpdateCheckBox.Checked && localPackIsNewer && File.Exists(PackPath))
             {
                 try
                 {
@@ -1329,6 +1339,7 @@ namespace AntigravityZhAssistant
                 string remoteVersion = ReadString(manifest, "version");
                 string packUrl = ReadString(manifest, "packUrl");
                 if (string.IsNullOrWhiteSpace(remoteVersion) || string.IsNullOrWhiteSpace(packUrl)) return;
+                if (ComparePackVersions(remoteVersion, bundledPackVersion) <= 0) return;
                 if (string.Equals(GetPackVersion(), remoteVersion, StringComparison.OrdinalIgnoreCase) && File.Exists(PackPath)) return;
 
                 string packJson = await updateHttp.GetStringAsync(packUrl);
@@ -1373,6 +1384,15 @@ namespace AntigravityZhAssistant
                     key.SetValue("TranslationPackVersion", version, RegistryValueKind.String);
             }
             catch { }
+        }
+
+        private static int ComparePackVersions(string left, string right)
+        {
+            Version leftVersion;
+            Version rightVersion;
+            if (Version.TryParse(left, out leftVersion) && Version.TryParse(right, out rightVersion))
+                return leftVersion.CompareTo(rightVersion);
+            return string.Compare(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         }
 
         private void SaveUnknownReport()
@@ -1636,15 +1656,13 @@ namespace AntigravityZhAssistant
             return File.Exists(path) ? path : null;
         }
 
-        private static Icon FindAntigravityIcon()
+        private static Icon LoadAssistantIcon()
         {
-            try
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("AssistantIcon"))
             {
-                string path = FindAntigravityExecutable();
-                if (path != null) return Icon.ExtractAssociatedIcon(path);
+                if (stream == null) return SystemIcons.Application;
+                using (Icon source = new Icon(stream)) return (Icon)source.Clone();
             }
-            catch { }
-            return SystemIcons.Application;
         }
 
         private static string LoadEmbeddedText(string resourceName)
@@ -1654,6 +1672,21 @@ namespace AntigravityZhAssistant
                 if (stream == null) throw new InvalidOperationException("缺少内置汉化词典。");
                 using (StreamReader reader = new StreamReader(stream, Encoding.UTF8)) return reader.ReadToEnd();
             }
+        }
+
+        private static Dictionary<string, string> LoadEmbeddedTranslations()
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            Dictionary<string, string> translations = serializer.Deserialize<Dictionary<string, string>>(
+                LoadEmbeddedText("BundledTranslationPack"));
+            return translations ?? new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        private static string LoadEmbeddedPackVersion()
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            IDictionary manifest = serializer.DeserializeObject(LoadEmbeddedText("BundledTranslationManifest")) as IDictionary;
+            return manifest == null ? string.Empty : ReadString(manifest, "version") ?? string.Empty;
         }
 
         private static Image LoadEmbeddedImage(string resourceName)
@@ -1710,7 +1743,6 @@ namespace AntigravityZhAssistant
                 trayIcon.Dispose();
                 localHttp.Dispose();
                 updateHttp.Dispose();
-                if (onboardingGlow != null) onboardingGlow.Dispose();
             }
             base.Dispose(disposing);
         }

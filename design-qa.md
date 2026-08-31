@@ -14,8 +14,8 @@
 - Fonts and typography: the title uses Segoe UI Variable Display Semibold at the source's 24 px logical scale. The assistant row is bold, the primary action is 15 px bold, the information row is reduced to 12 px, and option text remains 12 px. Weight, centering, wrapping, and hierarchy match the source while accommodating the requested Chinese copy.
 - Spacing and layout: the logo, title, 344 x 168 logical card, 272 x 40 logical primary action, setting row, and external information row align cleanly. The card's title, primary action, and settings use four equal 21 px logical vertical gaps. The window ends at the annotated red line; all content below it is removed. Radii and elevation are DPI-scaled.
 - Colors and tokens: body `#EAECF0`, primary `#8839EF`, title/foreground `#4C4F69`, card/secondary surfaces, muted option text, and title-bar surface match the extracted Antigravity tokens.
-- Image quality and assets: the glow and Antigravity logo are rasterized directly from the installed app's original SVG assets; no placeholder or reconstructed logo is used.
-- Copy and content: the requested replacements are present: `汉化助手 v0.6.7`, `汉化已生效`, dynamic installed Antigravity version plus pending-adaptation count as plain text, `自动更新`, and `开机启动`. `上一步` and `下一步` are absent.
+- Image quality and assets: the assistant uses an original stylized "中" character icon with a multicolor rainbow gradient on a white rounded-square background. A code-rendered multicolor ambient glow sits behind it. The official Antigravity logo and extracted application icon remain removed to avoid brand confusion and intellectual-property risk.
+- Copy and content: the requested replacements are present: `汉化助手 v0.6.11`, `汉化已生效`, dynamic installed Antigravity version plus pending-adaptation count as plain text, `自动更新`, and `开机启动`. `上一步` and `下一步` are absent.
 - Focused region evidence: the full-resolution combined image keeps the title, card, buttons, and option row readable, so a separate crop was unnecessary.
 
 ## Comparison history
