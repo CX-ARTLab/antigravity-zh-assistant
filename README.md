@@ -1,4 +1,7 @@
-# Antigravity 中文助手
+<div align="center">
+  <img src="src/Assets/assistant-icon.png" width="128" height="128" alt="Antigravity 中文助手 图标" />
+  <h1>Antigravity 中文助手</h1>
+</div>
 
 Antigravity 中文助手是一个面向 Windows 和 macOS 的非官方运行时汉化伴侣。它通过 Antigravity 的本地调试接口加载翻译，不修改 Antigravity 官方安装文件。翻译器只处理可识别的系统界面元素，默认跳过输入框、代码块、可编辑区域以及对话/项目内容。
 
